@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Produk — Rekberin</title>
+<meta name="description" content="Jelajahi semua produk digital, top up game, dan jasa di Rekberin.">
+<link rel="stylesheet" href="style.css">
+<style>
+/* ── Modal detail produk (products.html) ── */
+.prod-detail-overlay {
+  position:fixed; inset:0; z-index:900;
+  background:rgba(0,0,0,.75); backdrop-filter:blur(6px);
+  display:flex; align-items:center; justify-content:center;
+  padding:16px; opacity:0; pointer-events:none;
+  transition:opacity .2s;
+}
+.prod-detail-overlay.open { opacity:1; pointer-events:all; }
+
+.pdm-box {
+  background:#1A1E29; border:1px solid rgba(255,255,255,.1);
+  border-radius:20px; max-width:600px; width:100%; max-height:90vh;
+  overflow-y:auto; position:relative;
+  transform:translateY(20px); transition:transform .25s;
+}
+.prod-detail-overlay.open .pdm-box { transform:translateY(0); }
+
+.pdm-gallery {
+  border-radius:20px 20px 0 0; overflow:hidden;
+  background:#111420; aspect-ratio:16/9; position:relative;
+}
+.pdm-gallery img   { width:100%; height:100%; object-fit:contain; display:block; }
+.pdm-gallery .pdm-no-img {
+  display:flex; align-items:center; justify-content:center;
+  height:100%; font-size:72px;
+}
+.pdm-thumbs {
+  display:flex; gap:8px; padding:12px 20px 0; flex-wrap:wrap;
+}
+.pdm-thumbs img {
+  width:52px; height:52px; border-radius:8px; object-fit:cover;
+  cursor:pointer; opacity:.55; border:2px solid transparent; transition:all .15s;
+}
+.pdm-thumbs img.active { opacity:1; border-color:#E7A93D; }
+
+.pdm-body  { padding:22px 26px 30px; }
+.pdm-title { font-size:20px; font-weight:700; color:#fff; margin:0 0 10px; }
+.pdm-meta  { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
+.pdm-badge-cat {
+  font-size:11px; font-weight:600; padding:4px 12px; border-radius:20px;
+  background:rgba(77,163,245,.15); color:#4DA3F5;
+}
+.pdm-price { font-size:26px; font-weight:700; color:#E7A93D; margin-bottom:4px; }
+.pdm-stats { font-size:12px; color:rgba(255,255,255,.4); margin-bottom:20px; }
+.pdm-desc-label {
+  font-size:11px; font-weight:700; color:rgba(255,255,255,.35);
+  text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px;
+}
+.pdm-desc {
+  font-size:13px; color:rgba(255,255,255,.7); line-height:1.75;
+  white-space:pre-wrap; background:#111420; border-radius:12px;
+  padding:16px 18px; margin-bottom:20px;
+}
+.pdm-seller {
+  display:flex; align-items:center; gap:10px;
+  background:#111420; border-radius:12px; padding:12px 16px; margin-bottom:20px;
+}
+.pdm-seller-ava {
+  width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#f59e0b,#d97706);
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; font-weight:700; color:#fff; flex-shrink:0;
+}
+.pdm-seller-info .psi-name { font-size:13px; font-weight:600; color:#fff; }
+.pdm-seller-info .psi-role { font-size:11px; color:rgba(255,255,255,.4); }
+
+.pdm-close {
+  position:absolute; top:14px; right:16px;
+  background:rgba(0,0,0,.5); color:#fff; border:none; border-radius:50%;
+  width:34px; height:34px; cursor:pointer; font-size:17px;
+  display:flex; align-items:center; justify-content:center;
+  backdrop-filter:blur(6px); z-index:10; transition:background .15s;
+}
+.pdm-close:hover { background:rgba(0,0,0,.75); }
+
+.pdm-actions { display:flex; gap:10px; }
+.pdm-actions .btn { flex:1; text-align:center; }
+</style>
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<header class="site-header">
+  <div class="header-top">
+    <a href="index.html" class="brand"><span class="brand-mark"></span>Rekberin<small>Verified marketplace</small></a>
+
+    <form class="header-search" id="headerSearch">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="searchInput" placeholder="Cari produk, contoh: netflix, ml diamond...">
+    </form>
+
+    <nav class="main-nav">
+      <a href="index.html">Beranda</a>
+      <a href="products.html" class="active">Produk</a>
+      <a href="forum.html">Forum</a>
+      <a href="#rekber">Rekber</a>
+    </nav>
+
+    <div class="header-actions">
+      <a href="login.html" class="btn btn-ghost-light btn-sm">Masuk</a>
+      <a href="register.html" class="btn btn-gold btn-sm">Daftar</a>
+      <button class="menu-toggle" id="menuToggle" aria-label="Buka menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-drawer" id="mobileDrawer">
+  <div class="backdrop" onclick="closeDrawer()"></div>
+  <div class="panel">
+    <button class="close-drawer" onclick="closeDrawer()" aria-label="Tutup menu">✕</button>
+    <a href="index.html">Beranda</a>
+    <a href="products.html">Produk</a>
+    <a href="forum.html">Forum</a>
+    <a href="#rekber">Rekber</a>
+    <a href="login.html">Masuk</a>
+    <a href="register.html">Daftar</a>
+  </div>
+</div>
+
+<section class="page-banner">
+  <div class="wrap">
+    <span class="eyebrow">✓ Semua produk terverifikasi rekber</span>
+    <h1>Semua Produk</h1>
+    <p>Cari top up game, akun premium, atau jasa digital — bayar lewat rekber supaya dana baru cair ke penjual setelah pesananmu beres.</p>
+  </div>
+</section>
+
+<section class="catalog">
+  <div class="wrap">
+    <!-- ===== FILTER SIDEBAR ===== -->
+    <aside class="filter-panel">
+      <h4>Kategori</h4>
+      <div id="categoryFilters"></div>
+
+      <h4>Jenis Game</h4>
+      <div id="subFilters"></div>
+
+      <a href="products.html" class="filter-reset">↺ Reset semua filter</a>
+    </aside>
+
+    <!-- ===== RESULTS ===== -->
+    <div>
+      <div class="catalog-head">
+        <span class="count" id="resultCount"></span>
+        <select id="sortSelect" aria-label="Urutkan produk">
+          <option value="latest">Terbaru</option>
+          <option value="popular">Terlaris</option>
+          <option value="rating">Rating tertinggi</option>
+          <option value="price-asc">Harga terendah</option>
+          <option value="price-desc">Harga tertinggi</option>
+        </select>
+      </div>
+      <div class="product-grid" id="grid"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="site-footer" id="rekber">
+  <div class="footer-top">
+    <div class="wrap footer-grid">
+      <div class="footer-about">
+        <a href="index.html" class="brand"><span class="brand-mark"></span>Rekberin</a>
+        <p>Marketplace produk virtual dengan sistem rekber (rekening bersama) supaya setiap transaksi tetap aman, untuk pembeli maupun penjual.</p>
+      </div>
+      <div>
+        <h4>Menu</h4>
+        <ul>
+          <li><a href="index.html">Beranda</a></li>
+          <li><a href="products.html">Produk</a></li>
+          <li><a href="#rekber">Cara Kerja Rekber</a></li>
+          <li><a href="register.html">Buat Akun</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Kategori</h4>
+        <ul>
+          <li><a href="products.html?category=digital">Produk Digital</a></li>
+          <li><a href="products.html?category=game">Produk Game</a></li>
+          <li><a href="products.html?category=jasa">Jasa</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Bantuan</h4>
+        <ul>
+          <li><a href="#" onclick="showToast('Demo: halaman pusat bantuan belum dibuat.'); return false;">Pusat Bantuan</a></li>
+          <li><a href="#" onclick="showToast('Demo: kontak penjual memerlukan akun login.'); return false;">Hubungi Kami</a></li>
+          <li><a href="#" onclick="showToast('Demo: laporan transaksi memerlukan akun login.'); return false;">Lapor Transaksi</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© <span id="year"></span> Rekberin. Template demo — seluruh data produk bersifat contoh.</p>
+    <div class="legal">
+      <a href="#" onclick="showToast('Demo: halaman ketentuan layanan belum dibuat.'); return false;">Ketentuan Layanan</a>
+      <a href="#" onclick="showToast('Demo: halaman kebijakan privasi belum dibuat.'); return false;">Kebijakan Privasi</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ── MODAL DETAIL PRODUK ── -->
+<div class="prod-detail-overlay" id="prodDetailOverlay" onclick="closeProdDetail(event)">
+  <div class="pdm-box" id="pdmBox">
+    <button class="pdm-close" onclick="closeProdDetailBtn()">✕</button>
+    <div class="pdm-gallery" id="pdmGallery"></div>
+    <div class="pdm-thumbs" id="pdmThumbs"></div>
+    <div class="pdm-body">
+      <h2 class="pdm-title" id="pdmTitle"></h2>
+      <div class="pdm-meta" id="pdmMeta"></div>
+      <div class="pdm-price" id="pdmPrice"></div>
+      <div class="pdm-stats" id="pdmStats"></div>
+      <div id="pdmDescWrap">
+        <div class="pdm-desc-label">Deskripsi Produk</div>
+        <div class="pdm-desc" id="pdmDesc"></div>
+      </div>
+      <div class="pdm-seller" id="pdmSeller"></div>
+      <div class="pdm-actions">
+        <a href="#" id="pdmChatBtn" class="btn btn-ghost-light" onclick="showToast('Fitur chat memerlukan login.'); return false;">💬 Tanya Penjual</a>
+        <a href="#" id="pdmBuyBtn" class="btn btn-gold">🛒 Beli Sekarang</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://app.midtrans.com/snap/snap.js" data-client-key="Mid-client-3a96ocnU5RrQ3ShE"></script>
+<script src="data.js"></script>
+<script src="config.js"></script>
+<script src="chat.js"></script>
+<script src="app.js"></script>
+<script src="nav-auth.js"></script>
+<script>
+  document.getElementById("menuToggle").addEventListener("click", openDrawer);
+  wireHeaderSearch("headerSearch");
+
+  /* ── MODAL DETAIL PRODUK ── */
+  const fmt = n => "Rp " + Number(n).toLocaleString("id-ID");
+
+  function openProdDetail(p){
+    const photos = Array.isArray(p.photos) ? p.photos : (p.cover_image ? [p.cover_image] : []);
+
+    // Gallery
+    const galleryEl = document.getElementById("pdmGallery");
+    galleryEl.innerHTML = photos.length
+      ? `<img id="pdmMainImg" src="${photos[0]}" alt="${p.title}">`
+      : `<div class="pdm-no-img">${p.icon||"📦"}</div>`;
+
+    // Thumbnails
+    const thumbsEl = document.getElementById("pdmThumbs");
+    thumbsEl.innerHTML = photos.length > 1
+      ? photos.map((u,i)=>`<img src="${u}" class="${i===0?'active':''}" onclick="pdmSwitch(this,'${u}')">`).join("")
+      : "";
+
+    // Info
+    document.getElementById("pdmTitle").textContent = p.title;
+    document.getElementById("pdmPrice").textContent = fmt(p.price);
+    document.getElementById("pdmStats").textContent =
+      `⭐ ${parseFloat(p.rating||0).toFixed(1)} · ${p.sold||p.sold_count||0} terjual · Stok: ${p.stock||"—"}`;
+
+    // Meta badges
+    const catLabel = {digital:"Produk Digital", game:"Produk Game", jasa:"Jasa"}[p.cat||p.category] || (p.cat||p.category||"");
+    document.getElementById("pdmMeta").innerHTML =
+      `<span class="pdm-badge-cat">${catLabel}</span>
+       <span class="badge-status s-delivered" style="font-size:11px;">${p.badge||"Instan"}</span>
+       <span style="font-size:11px;color:rgba(255,255,255,.4);">⭐ ${parseFloat(p.rating||0).toFixed(1)} (${p.reviews||0} ulasan)</span>`;
+
+    // Deskripsi
+    const descWrap = document.getElementById("pdmDescWrap");
+    const descEl   = document.getElementById("pdmDesc");
+    if(p.desc || p.description){
+      descEl.textContent = p.desc || p.description;
+      descWrap.style.display = "block";
+    } else {
+      descWrap.style.display = "none";
+    }
+
+    // Penjual
+    const sellerName = p.seller || p.seller_name || "Penjual";
+    document.getElementById("pdmSeller").innerHTML = `
+      <div class="pdm-seller-ava">${sellerName.slice(0,2).toUpperCase()}</div>
+      <div class="pdm-seller-info">
+        <div class="psi-name">${sellerName}</div>
+        <div class="psi-role">✅ Penjual Terverifikasi</div>
+      </div>`;
+
+    // Tombol beli
+    document.getElementById("pdmBuyBtn").onclick = e => {
+      e.preventDefault();
+      closeProdDetailBtn();
+      if(typeof openModal === "function") openModal(p);
+      else showToast("Fitur beli memerlukan login.");
+    };
+
+    // Buka overlay
+    document.getElementById("prodDetailOverlay").classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeProdDetail(e){
+    if(e.target === document.getElementById("prodDetailOverlay")) closeProdDetailBtn();
+  }
+  function closeProdDetailBtn(){
+    document.getElementById("prodDetailOverlay").classList.remove("open");
+    document.body.style.overflow = "";
+  }
+  document.addEventListener("keydown", e => { if(e.key==="Escape") closeProdDetailBtn(); });
+
+  // Intercept klik pada kartu produk untuk buka detail
+  document.getElementById("grid").addEventListener("click", e => {
+    const card = e.target.closest("[data-prod-id]");
+    if(!card) return;
+    // Kalau klik tombol "Beli" langsung → biarkan handler asli
+    if(e.target.closest(".buy-btn, .btn-buy, button")) return;
+    e.preventDefault(); e.stopPropagation();
+    const id = card.dataset.prodId;
+    const prod = (typeof PRODUCTS !== "undefined" ? PRODUCTS : []).find(p => String(p.id) === String(id));
+    if(prod) openProdDetail(prod);
+  });
+
+  // Expose globally so app.js renderGrid can set data-prod-id
+  window.__openProdDetail = openProdDetail;
+
+  const params = new URLSearchParams(window.location.search);
+  const state = {
+    category: params.get("category") || "",
+    sub: params.get("sub") || "",
+    search: params.get("search") || "",
+    sort: params.get("sort") || "latest",
+  };
+  document.getElementById("searchInput").value = state.search;
+  document.getElementById("sortSelect").value = state.sort;
+
+  function renderFilters(){
+    document.getElementById("categoryFilters").innerHTML = CATEGORIES.map(c => `
+      <label class="filter-opt">
+        <input type="radio" name="cat" value="${c.id}" ${state.category === c.id ? "checked" : ""}>
+        ${c.label}
+      </label>`).join("") + `
+      <label class="filter-opt">
+        <input type="radio" name="cat" value="" ${state.category === "" ? "checked" : ""}>
+        Semua kategori
+      </label>`;
+
+    document.getElementById("subFilters").innerHTML = GAME_SUBCATEGORIES.map(s => `
+      <label class="filter-opt">
+        <input type="radio" name="sub" value="${s.id}" ${state.sub === s.id ? "checked" : ""}>
+        ${s.label}
+      </label>`).join("") + `
+      <label class="filter-opt">
+        <input type="radio" name="sub" value="" ${state.sub === "" ? "checked" : ""}>
+        Semua game
+      </label>`;
+
+    document.querySelectorAll('input[name="cat"]').forEach(el => el.addEventListener("change", e => {
+      state.category = e.target.value; state.sub = ""; renderFilters(); applyFilters();
+    }));
+    document.querySelectorAll('input[name="sub"]').forEach(el => el.addEventListener("change", e => {
+      state.sub = e.target.value; if(state.sub) state.category = "game"; renderFilters(); applyFilters();
+    }));
+  }
+
+  function applyFilters(){
+    let list = PRODUCTS.slice();
+
+    if(state.category) list = list.filter(p => p.cat === state.category);
+    if(state.sub) list = list.filter(p => p.sub === state.sub);
+    if(state.search){
+      const q = state.search.toLowerCase();
+      list = list.filter(p => p.title.toLowerCase().includes(q) || p.seller.toLowerCase().includes(q));
+    }
+
+    switch(state.sort){
+      case "popular":    list.sort((a,b)=> b.sold - a.sold); break;
+      case "rating":     list.sort((a,b)=> b.rating - a.rating); break;
+      case "price-asc":  list.sort((a,b)=> a.price - b.price); break;
+      case "price-desc": list.sort((a,b)=> b.price - a.price); break;
+      default: break; /* "latest" — PRODUCTS already ordered newest-first from Supabase */
+    }
+
+    document.getElementById("resultCount").textContent = `${list.length} produk ditemukan`;
+    renderGrid("grid", list);
+  }
+
+  document.getElementById("searchInput").addEventListener("input", e => { state.search = e.target.value; applyFilters(); });
+  document.getElementById("sortSelect").addEventListener("change", e => { state.sort = e.target.value; applyFilters(); });
+
+  async function initCatalog(){
+    renderFilters();
+    await loadProducts();
+    applyFilters();
+  }
+
+  initCatalog();
+</script>
+</body>
+</html>

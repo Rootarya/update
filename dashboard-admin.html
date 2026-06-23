@@ -1,0 +1,2055 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>SMM Panel — Admin Dashboard</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0A0C12;
+  --bg2:      #111420;
+  --bg3:      #181C28;
+  --surface:  #1E2235;
+  --border:   rgba(255,255,255,.07);
+  --border2:  rgba(255,255,255,.12);
+  --text:     #E8EAF0;
+  --muted:    rgba(232,234,240,.45);
+  --dim:      rgba(232,234,240,.25);
+  --accent:   #7C5CFC;
+  --accent2:  #5B3FD8;
+  --green:    #10B981;
+  --gold:     #F59E0B;
+  --red:      #EF4444;
+  --blue:     #3B82F6;
+  --purple:   #A78BFA;
+  --cyan:     #06B6D4;
+  --font:     'Segoe UI', system-ui, -apple-system, sans-serif;
+  --radius:   12px;
+  --radius-lg: 16px;
+  --sidebar-w: 230px;
+  --header-h: 56px;
+}
+
+body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 99px; }
+
+/* ── HEADER ── */
+.header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: var(--header-h);
+  background: rgba(10,12,18,.92); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 20px; gap: 16px;
+}
+.header-brand {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 17px; font-weight: 800; color: #fff; text-decoration: none;
+  letter-spacing: -.02em;
+}
+.brand-dot {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--cyan));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+}
+.header-spacer { flex: 1; }
+.header-pill {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 99px; padding: 5px 12px 5px 8px;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 600; color: var(--text); cursor: pointer;
+}
+.header-pill .avatar { width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--purple)); display: flex; align-items: center; justify-content: center; font-size: 10px; }
+.header-badge { background: rgba(124,92,252,.2); color: var(--purple); font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 99px; }
+
+/* ── LAYOUT ── */
+.shell { display: flex; padding-top: var(--header-h); min-height: 100vh; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w); flex-shrink: 0;
+  background: var(--bg2); border-right: 1px solid var(--border);
+  position: fixed; top: var(--header-h); bottom: 0; left: 0;
+  overflow-y: auto; padding: 18px 0;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.sidebar-section { padding: 4px 14px; font-size: 10px; font-weight: 700; color: var(--dim); letter-spacing: .08em; text-transform: uppercase; margin-top: 14px; margin-bottom: 2px; }
+.sidebar a {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 16px; color: var(--muted); font-size: 13px; font-weight: 500;
+  text-decoration: none; border-left: 2px solid transparent;
+  transition: all .15s; border-radius: 0; cursor: pointer;
+}
+.sidebar a:hover { color: var(--text); background: rgba(255,255,255,.03); }
+.sidebar a.active { color: #fff; border-left-color: var(--accent); background: rgba(124,92,252,.08); }
+.sidebar a .sico { width: 16px; text-align: center; opacity: .75; font-size: 14px; }
+.sidebar a.active .sico { opacity: 1; }
+.sidebar-badge { margin-left: auto; background: rgba(239,68,68,.2); color: #F87171; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 99px; }
+.sidebar-sep { height: 1px; background: var(--border); margin: 10px 14px; }
+
+/* ── MAIN ── */
+.main { flex: 1; margin-left: var(--sidebar-w); padding: 28px 32px; max-width: calc(100% - var(--sidebar-w)); }
+
+/* ── PAGE HEADER ── */
+.page-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; gap: 12px; flex-wrap: wrap; }
+.page-hd h1 { font-size: 20px; font-weight: 800; color: #fff; letter-spacing: -.02em; }
+.page-hd .sub { font-size: 12px; color: var(--dim); margin-top: 2px; }
+
+/* ── STAT GRID ── */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 18px 20px; position: relative; overflow: hidden;
+}
+.stat-card::before { content:''; position:absolute; top:-20px; right:-20px; width:80px; height:80px; border-radius:50%; opacity:.06; }
+.stat-card.green::before { background: var(--green); }
+.stat-card.gold::before  { background: var(--gold); }
+.stat-card.red::before   { background: var(--red); }
+.stat-card.blue::before  { background: var(--blue); }
+.stat-card.purple::before{ background: var(--purple); }
+.stat-card.cyan::before  { background: var(--cyan); }
+.sc-icon { font-size: 20px; margin-bottom: 10px; }
+.sc-label { font-size: 11px; color: var(--dim); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+.sc-val { font-size: 24px; font-weight: 800; color: #fff; letter-spacing: -.02em; }
+.sc-val.sm { font-size: 16px; }
+.sc-sub { font-size: 11px; color: var(--dim); margin-top: 4px; }
+.stat-card.green .sc-val { color: var(--green); }
+.stat-card.gold  .sc-val { color: var(--gold); }
+.stat-card.red   .sc-val { color: var(--red); }
+.stat-card.blue  .sc-val { color: var(--blue); }
+.stat-card.purple .sc-val { color: var(--purple); }
+.stat-card.cyan  .sc-val { color: var(--cyan); }
+
+/* ── CARD ── */
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 20px;
+}
+.card-hd {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid var(--border); gap: 12px; flex-wrap: wrap;
+}
+.card-hd h3 { font-size: 14px; font-weight: 700; color: #fff; }
+.card-body { padding: 20px; }
+
+/* ── TABLE ── */
+.tbl-wrap { overflow-x: auto; }
+table.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+table.tbl th {
+  text-align: left; font-size: 10px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--dim); padding: 0 16px 12px; white-space: nowrap;
+}
+table.tbl td {
+  padding: 11px 16px; color: var(--text);
+  border-top: 1px solid var(--border); vertical-align: middle;
+}
+table.tbl tr:hover td { background: rgba(255,255,255,.015); }
+
+/* ── BADGES ── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 10px; font-weight: 700; padding: 3px 9px;
+  border-radius: 99px; white-space: nowrap;
+}
+.b-green  { background: rgba(16,185,129,.15); color: #34D399; }
+.b-gold   { background: rgba(245,158,11,.15);  color: #FCD34D; }
+.b-red    { background: rgba(239,68,68,.15);   color: #F87171; }
+.b-blue   { background: rgba(59,130,246,.15);  color: #93C5FD; }
+.b-purple { background: rgba(167,139,250,.15); color: var(--purple); }
+.b-cyan   { background: rgba(6,182,212,.15);   color: #67E8F9; }
+.b-gray   { background: rgba(255,255,255,.07); color: var(--muted); }
+.b-dot::before { content:''; width:5px; height:5px; border-radius:50%; background:currentColor; display:inline-block; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 700; padding: 8px 14px;
+  border-radius: 8px; border: none; cursor: pointer;
+  font-family: var(--font); transition: all .15s; white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-ghost { background: rgba(255,255,255,.06); color: var(--text); border: 1px solid var(--border2); }
+.btn-ghost:hover { background: rgba(255,255,255,.1); }
+.btn-danger { background: rgba(239,68,68,.15); color: #F87171; border: 1px solid rgba(239,68,68,.25); }
+.btn-danger:hover { background: rgba(239,68,68,.25); }
+.btn-green { background: rgba(16,185,129,.15); color: #34D399; border: 1px solid rgba(16,185,129,.25); }
+.btn-green:hover { background: rgba(16,185,129,.25); }
+.btn-sm { font-size: 11px; padding: 5px 10px; border-radius: 6px; }
+.btn-xs { font-size: 10px; padding: 3px 8px; border-radius: 5px; }
+
+/* ── INPUTS ── */
+.input, .select {
+  background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px;
+  padding: 8px 12px; color: var(--text); font-size: 13px; font-family: var(--font);
+  outline: none; width: 100%;
+}
+.input:focus, .select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(124,92,252,.1); }
+.input-sm { font-size: 12px; padding: 6px 10px; border-radius: 7px; }
+
+/* ── FILTER BAR ── */
+.filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.filter-bar .input, .filter-bar .select { width: auto; flex: 1; min-width: 140px; font-size: 12px; padding: 7px 10px; }
+
+/* ── FORM GROUP ── */
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 11px; font-weight: 700; color: var(--dim); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+
+/* ── TABS ── */
+[id^="tab-"] { display: none; }
+[id^="tab-"].active { display: block; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 500;
+  display: none; align-items: center; justify-content: center; padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal-card {
+  background: var(--bg2); border: 1px solid var(--border2); border-radius: 18px;
+  padding: 28px; max-width: 460px; width: 100%; position: relative;
+}
+.modal-card h3 { font-size: 17px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+.modal-card .sub { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+.modal-close { position: absolute; top: 14px; right: 16px; background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer; line-height: 1; }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+/* ── LIVE DOT ── */
+.live-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.25); border-radius: 99px; padding: 3px 10px; font-size: 10px; font-weight: 700; color: var(--green); }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ── PROGRESS BAR ── */
+.prog-bar { height: 5px; border-radius: 99px; background: rgba(255,255,255,.06); overflow: hidden; }
+.prog-fill { height: 100%; border-radius: 99px; }
+
+/* ── TOGGLE ── */
+.toggle { position: relative; width: 36px; height: 20px; cursor: pointer; }
+.toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-track { position: absolute; inset: 0; border-radius: 99px; background: rgba(255,255,255,.12); transition: all .2s; }
+.toggle input:checked + .toggle-track { background: var(--accent); }
+.toggle-thumb { position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: #fff; transition: all .2s; }
+.toggle input:checked ~ .toggle-thumb { left: 19px; }
+
+/* ── EMPTY STATE ── */
+.empty { text-align: center; padding: 48px 24px; color: var(--dim); }
+.empty .e-icon { font-size: 36px; margin-bottom: 12px; }
+.empty p { font-size: 13px; }
+
+/* ── LOG ITEM ── */
+.log-item { display: flex; gap: 14px; padding: 13px 20px; border-bottom: 1px solid var(--border); font-size: 13px; align-items: flex-start; }
+.log-icon { width: 30px; height: 30px; border-radius: 8px; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+.log-action { font-weight: 700; color: #fff; }
+.log-meta { font-size: 11px; color: var(--dim); margin-top: 2px; }
+
+
+
+/* ── API KEY ── */
+.api-key-wrap { background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; font-family: monospace; font-size: 13px; color: var(--text); }
+.api-key-wrap .key-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── CHART PLACEHOLDER ── */
+.chart-ph { height: 160px; display: flex; align-items: flex-end; gap: 4px; padding: 0 4px; }
+.chart-bar { flex: 1; border-radius: 4px 4px 0 0; transition: opacity .15s; cursor: pointer; }
+.chart-bar:hover { opacity: .8; }
+
+/* ── TOAST ── */
+.toast-wrap { position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.toast { background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; padding: 12px 16px; font-size: 13px; color: var(--text); display: flex; align-items: center; gap: 8px; animation: slideIn .25s ease; pointer-events: all; }
+@keyframes slideIn { from{transform:translateX(100%);opacity:0} to{transform:none;opacity:1} }
+.toast.success { border-color: rgba(16,185,129,.3); }
+.toast.error   { border-color: rgba(239,68,68,.3); }
+
+/* ── RESPONSIVE ── */
+@media(max-width: 768px) {
+  :root { --header-h: 52px; }
+  .sidebar { display: none; }
+  .main { margin-left: 0; padding: 12px; max-width: 100%; }
+  .stat-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-card { padding: 14px 16px; }
+  .sc-val { font-size: 20px; }
+  .sc-val.sm { font-size: 14px; }
+  .page-hd { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .page-hd h1 { font-size: 17px; }
+  .card-hd { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .filter-bar { flex-direction: column; }
+  .filter-bar .input, .filter-bar .select { width: 100%; min-width: unset; }
+  [style*="grid-template-columns:2fr 1fr"],
+  [style*="grid-template-columns:1fr 1fr"],
+  [style*="grid-template-columns:1fr 1.5fr"],
+  [style*="grid-template-columns:repeat(4,1fr)"],
+  [style*="grid-template-columns:repeat(5,1fr)"],
+  [style*="grid-template-columns:repeat(3,1fr)"] {
+    grid-template-columns: 1fr !important;
+  }
+  .tbl-wrap { -webkit-overflow-scrolling: touch; }
+  table.tbl { font-size: 12px; }
+  table.tbl th, table.tbl td { padding: 9px 10px; }
+  .btn { padding: 7px 12px; font-size: 12px; }
+  .btn-sm { font-size: 11px; padding: 5px 9px; }
+  .modal-card { padding: 20px; border-radius: 14px; }
+  .modal-overlay { padding: 12px; }
+  .api-key-wrap { font-size: 12px; }
+  .toast-wrap { bottom: 12px; right: 12px; left: 12px; }
+  .toast { font-size: 12px; }
+}
+
+@media(max-width: 400px) {
+  .stat-grid { grid-template-columns: 1fr; }
+  .main { padding: 10px; }
+  .page-hd h1 { font-size: 15px; }
+  .header-brand { font-size: 15px; }
+}
+
+/* ── MOBILE MENU ── */
+.mob-menu-btn { display: none; background: none; border: none; color: var(--text); font-size: 20px; cursor: pointer; padding: 6px; line-height: 1; }
+@media(max-width: 768px) {
+  .mob-menu-btn { display: flex; align-items: center; }
+  .sidebar.mob-open { display: flex; z-index: 200; box-shadow: 4px 0 32px rgba(0,0,0,.5); }
+  .mob-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 199; }
+  .mob-overlay.open { display: block; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="header">
+  <button class="mob-menu-btn" onclick="toggleMobileMenu()" aria-label="Menu">☰</button>
+  <a href="#" class="header-brand">
+    <div class="brand-dot">⚡</div>
+    SMMPanel
+  </a>
+  <div class="header-spacer"></div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div class="live-badge"><span class="live-dot"></span> LIVE</div>
+    <div class="header-pill" title="Admin">
+      <div class="avatar">A</div>
+      Admin
+      <span class="header-badge">ADMIN</span>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="doLogout()">🚪</button>
+  </div>
+</header>
+
+<!-- ── SHELL ── -->
+<div class="shell">
+
+  <!-- ── SIDEBAR ── -->
+  <nav class="sidebar" id="sidebarNav">
+    <div class="sidebar-section">Utama</div>
+    <a class="active" onclick="nav('dashboard',this)"><span class="sico">📊</span> Dashboard</a>
+    <a onclick="nav('orders',this)"><span class="sico">📦</span> Manajemen Order <span class="sidebar-badge" id="pendingBadge">—</span></a>
+    <a onclick="nav('users',this)"><span class="sico">👥</span> Manajemen User</a>
+
+    <div class="sidebar-section">Layanan</div>
+    <a onclick="nav('services',this)"><span class="sico">🛍️</span> Layanan (Services)</a>
+    <a onclick="nav('providers',this)"><span class="sico">🔌</span> Provider API</a>
+
+    <div class="sidebar-section">Keuangan</div>
+    <a onclick="nav('finance',this)"><span class="sico">💰</span> Keuangan & Deposit</a>
+
+
+    <div class="sidebar-section">Developer</div>
+    <a onclick="nav('api',this)"><span class="sico">🔑</span> API & Otomasi</a>
+    <a onclick="nav('reports',this)"><span class="sico">📈</span> Laporan & Analytics</a>
+
+    <div class="sidebar-section">Sistem</div>
+    <a onclick="nav('settings',this)"><span class="sico">⚙️</span> Pengaturan Website</a>
+    <a onclick="nav('security',this)"><span class="sico">🔒</span> Keamanan</a>
+
+    <div class="sidebar-sep"></div>
+    <a onclick="doLogout()"><span class="sico">🚪</span> Keluar</a>
+  </nav>
+
+  <!-- ── MAIN ── -->
+  <main class="main">
+
+    <!-- ═══════════════════════ 1. DASHBOARD ═══════════════════════ -->
+    <div id="tab-dashboard" class="active">
+      <div class="page-hd">
+        <div>
+          <h1>📊 Dashboard Admin</h1>
+          <div class="sub">Ringkasan platform real-time · Update otomatis setiap 30 detik</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="refreshDashboard()">🔄 Refresh</button>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card blue"><div class="sc-icon">📦</div><div class="sc-label">Total Order</div><div class="sc-val" id="stat-total-orders">—</div><div class="sc-sub">Semua waktu</div></div>
+        <div class="stat-card green"><div class="sc-icon">✅</div><div class="sc-label">Order Selesai</div><div class="sc-val" id="stat-completed-orders">—</div><div class="sc-sub">Completion rate</div></div>
+        <div class="stat-card gold"><div class="sc-icon">⏳</div><div class="sc-label">Pending</div><div class="sc-val" id="stat-pending-orders">—</div><div class="sc-sub">Belum bayar</div></div>
+        <div class="stat-card red"><div class="sc-icon">⚠️</div><div class="sc-label">Sengketa</div><div class="sc-val" id="stat-disputed-orders">—</div><div class="sc-sub">Perlu perhatian</div></div>
+        <div class="stat-card green"><div class="sc-icon">💵</div><div class="sc-label">GMV Selesai</div><div class="sc-val sm" id="stat-gmv">—</div><div class="sc-sub">Nilai transaksi</div></div>
+        <div class="stat-card cyan"><div class="sc-icon">💳</div><div class="sc-label">Revenue Platform</div><div class="sc-val sm" id="stat-revenue">—</div><div class="sc-sub">Fee terkumpul</div></div>
+        <div class="stat-card purple"><div class="sc-icon">👤</div><div class="sc-label">Total User</div><div class="sc-val" id="stat-total-users">—</div><div class="sc-sub">Pembeli + Penjual</div></div>
+        <div class="stat-card"><div class="sc-icon">🔒</div><div class="sc-label">Disuspend</div><div class="sc-val" id="stat-suspended">—</div><div class="sc-sub">Akun diblokir</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:20px;">
+        <div class="card">
+          <div class="card-hd">
+            <h3>📈 Revenue 7 Hari Terakhir</h3>
+            <div class="live-badge"><span class="live-dot"></span> LIVE</div>
+          </div>
+          <div class="card-body">
+            <div class="chart-ph" id="revenueChart"></div>
+            <div style="display:flex;gap:16px;margin-top:12px;font-size:11px;color:var(--dim);">
+              <span>Sen</span><span>Sel</span><span>Rab</span><span>Kam</span><span>Jum</span><span>Sab</span><span>Min</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h3>⚡ Aktivitas Terbaru</h3></div>
+          <div id="recentActivity">
+            <div class="log-item"><div class="log-meta" style="color:var(--dim);">⏳ Memuat aktivitas…</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">
+          <h3>⚠️ Order Bermasalah</h3>
+          <button class="btn btn-ghost btn-sm" onclick="nav('orders',document.querySelector('[onclick*=orders]'))">Lihat Semua →</button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>#</th><th>Layanan</th><th>User</th><th>Total</th><th>Status</th><th>Waktu</th><th>Aksi</th></tr></thead>
+            <tbody id="troubledOrdersBody"><tr><td colspan="7" style="text-align:center;padding:16px;color:var(--dim);">⏳ Memuat…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ 2. ORDERS ═══════════════════════ -->
+    <div id="tab-orders">
+      <div class="page-hd">
+        <div><h1>📦 Manajemen Order</h1><div class="sub">Kelola, track, dan aksi semua order dalam satu tempat</div></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="exportOrdersCSV()">⬇ Export CSV</button>
+          <button class="btn btn-ghost btn-sm" onclick="showToast('Refresh ✓','success')">🔄 Refresh</button>
+        </div>
+      </div>
+
+      <div class="stat-grid" style="grid-template-columns:repeat(5,1fr);">
+        <div class="stat-card"><div class="sc-label">Semua</div><div class="sc-val" id="ord-stat-all">—</div></div>
+        <div class="stat-card gold"><div class="sc-label">Pending</div><div class="sc-val" id="ord-stat-pending">—</div></div>
+        <div class="stat-card blue"><div class="sc-label">Proses</div><div class="sc-val" id="ord-stat-processing">—</div></div>
+        <div class="stat-card green"><div class="sc-label">Selesai</div><div class="sc-val" id="ord-stat-completed">—</div></div>
+        <div class="stat-card red"><div class="sc-label">Sengketa</div><div class="sc-val" id="ord-stat-disputed">—</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">
+          <h3>Semua Order</h3>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-ghost btn-sm" onclick="doBulkCancel()">⚡ Bulk Cancel</button>
+            <button class="btn btn-ghost btn-sm" onclick="doBulkResend()">🔄 Bulk Resend</button>
+          </div>
+        </div>
+        <div class="card-body" style="padding-bottom:0;">
+          <div class="filter-bar">
+            <input type="text" class="input" placeholder="🔍 Cari order ID, user, layanan…" oninput="filterOrders(this.value)">
+            <select class="select" style="width:160px;" onchange="filterOrders()">
+              <option>Semua Status</option>
+              <option>Pending</option>
+              <option>Processing</option>
+              <option>Completed</option>
+              <option>Error</option>
+              <option>Cancelled</option>
+            </select>
+            <select class="select" style="width:150px;">
+              <option>Semua Layanan</option>
+              <option>Instagram</option>
+              <option>TikTok</option>
+              <option>YouTube</option>
+              <option>Facebook</option>
+            </select>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl" id="ordersTable">
+            <thead><tr><th><input type="checkbox" id="checkAll" onchange="toggleAll(this)"></th><th>ID</th><th>Layanan</th><th>User</th><th>Link / Target</th><th>Qty</th><th>Harga</th><th>Status</th><th>Provider</th><th>Waktu</th><th>Aksi</th></tr></thead>
+            <tbody><tr><td colspan="11" style="text-align:center;padding:24px;color:var(--dim);">⏳ Memuat order…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ 3. USERS ═══════════════════════ -->
+    <div id="tab-users">
+      <div class="page-hd">
+        <div><h1>👥 Manajemen User</h1><div class="sub">Atur user, saldo, role, dan harga kustom</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('addUser')">+ Tambah User</button>
+      </div>
+
+      <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-card blue"><div class="sc-label">Total User</div><div class="sc-val" id="usr-stat-total">—</div></div>
+        <div class="stat-card green"><div class="sc-label">User Aktif</div><div class="sc-val" id="usr-stat-active">—</div></div>
+        <div class="stat-card red"><div class="sc-label">Disuspend</div><div class="sc-val" id="usr-stat-suspended">—</div></div>
+        <div class="stat-card purple"><div class="sc-label">Total Penjual</div><div class="sc-val" id="usr-stat-sellers">—</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd"><h3>Daftar User</h3></div>
+        <div class="card-body" style="padding-bottom:0;">
+          <div class="filter-bar">
+            <input type="text" class="input" placeholder="🔍 Cari nama, username, email…">
+            <select class="select" style="width:140px;"><option>Semua Role</option><option>User</option><option>Reseller</option><option>Staff</option><option>Admin</option></select>
+            <select class="select" style="width:140px;"><option>Semua Status</option><option>Aktif</option><option>Suspended</option><option>Banned</option></select>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>User</th><th>Email</th><th>Role</th><th>Saldo</th><th>Total Order</th><th>Status</th><th>Bergabung</th><th>Aksi</th></tr></thead>
+            <tbody id="usersTableBody"><tr><td colspan="8" style="text-align:center;padding:24px;color:var(--dim);">⏳ Memuat user…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ 4. SERVICES ═══════════════════════ -->
+    <div id="tab-services">
+      <div class="page-hd">
+        <div><h1>🛍️ Manajemen Layanan</h1><div class="sub">Tambah, edit, atur harga dan sinkronisasi layanan</div></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="showToast('Sinkronisasi dari semua provider…','info')">🔄 Sync Provider</button>
+          <button class="btn btn-primary btn-sm" onclick="openModal('addService')">+ Tambah Layanan</button>
+        </div>
+      </div>
+
+      <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-card cyan"><div class="sc-label">Total Layanan</div><div class="sc-val">247</div></div>
+        <div class="stat-card green"><div class="sc-label">Aktif</div><div class="sc-val">198</div></div>
+        <div class="stat-card gold"><div class="sc-label">Nonaktif</div><div class="sc-val">49</div></div>
+        <div class="stat-card blue"><div class="sc-label">Kategori</div><div class="sc-val">14</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd"><h3>Daftar Layanan</h3></div>
+        <div class="card-body" style="padding-bottom:0;">
+          <div class="filter-bar">
+            <input type="text" class="input" placeholder="🔍 Cari layanan…">
+            <select class="select" style="width:150px;"><option>Semua Kategori</option><option>Instagram</option><option>TikTok</option><option>YouTube</option><option>Facebook</option><option>Twitter/X</option></select>
+            <select class="select" style="width:130px;"><option>Semua Status</option><option>Aktif</option><option>Nonaktif</option></select>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl" id="servicesTable">
+            <thead><tr><th>ID</th><th>Layanan</th><th>Kategori</th><th>Harga</th><th>Stok</th><th>Status</th><th>Aksi</th></tr></thead>
+            <tbody><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--dim);">⏳ Memuat layanan dari database…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ 5. PROVIDERS ═══════════════════════ -->
+    <div id="tab-providers">
+      <div class="page-hd">
+        <div><h1>🔌 Provider Management</h1><div class="sub">Kelola API provider dan routing order</div></div>
+        <button class="btn btn-primary btn-sm" onclick="openModal('addProvider')">+ Tambah Provider</button>
+      </div>
+
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat-card green"><div class="sc-label">Provider Aktif</div><div class="sc-val">4 / 5</div></div>
+        <div class="stat-card gold"><div class="sc-label">Total Saldo</div><div class="sc-val sm">$184.20</div></div>
+        <div class="stat-card blue"><div class="sc-label">Total Layanan Ter-import</div><div class="sc-val">247</div></div>
+      </div>
+
+      <div id="providerList">
+        <!-- Provider Card -->
+        <div class="card" style="margin-bottom:14px;">
+          <div class="card-hd">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(16,185,129,.15);display:flex;align-items:center;justify-content:center;font-size:18px;">🅰</div>
+              <div>
+                <div style="font-weight:700;color:#fff;">ProviderA SMM</div>
+                <div style="font-size:11px;color:var(--muted);">https://providera.com/api/v2</div>
+              </div>
+              <span class="badge b-green b-dot">Online</span>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-ghost btn-sm" onclick="showToast('Sinkronisasi layanan dari ProviderA…','info')">🔄 Sync Layanan</button>
+              <button class="btn btn-ghost btn-sm" onclick="showToast('Cek saldo provider…','info')">💰 Cek Saldo</button>
+              <button class="btn btn-ghost btn-sm">⚙️ Edit</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
+              <div><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Saldo</div><div style="font-weight:700;color:var(--green);">$124.50</div></div>
+              <div><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Layanan Aktif</div><div style="font-weight:700;">148</div></div>
+              <div><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Order Hari Ini</div><div style="font-weight:700;">328</div></div>
+              <div><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Response Time</div><div style="font-weight:700;color:var(--green);">124ms</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:14px;">
+          <div class="card-hd">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="width:36px;height:36px;border-radius:10px;background:rgba(59,130,246,.15);display:flex;align-items:center;justify-content:center;font-size:18px;">🅱</div>
+              <div>
+                <div style="font-weight:700;color:#fff;">ProviderB Panel</div>
+                <div style="font-size:11px;color:var(--muted);">https://providerb.net/api</div>
+              </div>
+              <span class="badge b-gold b-dot">Saldo Rendah</span>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-ghost btn-sm" onclick="showToast('Sinkronisasi layanan dari ProviderB…','info')">🔄 Sync Layanan</button>
+              <button class="btn btn-ghost btn-sm">💰 Cek Saldo</button>
+              <button class="btn btn-ghost btn-sm">⚙️ Edit</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
+              <div><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Saldo</div><div style="font-weight:700;color:var(--gold);">$12.40</div></div>
+              <div><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Layanan Aktif</div><div style="font-weight:700;">99</div></div>
+              <div><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Order Hari Ini</div><div style="font-weight:700;">187</div></div>
+              <div><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Response Time</div><div style="font-weight:700;color:var(--blue);">342ms</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ 6. KEUANGAN ═══════════════════════ -->
+    <div id="tab-finance">
+      <div class="page-hd">
+        <div><h1>💰 Keuangan & Deposit</h1><div class="sub">Deposit, transaksi, refund, dan laporan profit</div></div>
+        <button class="btn btn-ghost btn-sm" onclick="showToast('Export CSV berhasil','success')">⬇ Export CSV</button>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card green"><div class="sc-label">GMV Selesai</div><div class="sc-val sm" id="fin-stat-gmv">—</div></div>
+        <div class="stat-card blue"><div class="sc-label">Revenue Platform</div><div class="sc-val sm" id="fin-stat-revenue">—</div></div>
+        <div class="stat-card gold"><div class="sc-label">Total Escrow Ditahan</div><div class="sc-val sm" id="fin-stat-escrow">—</div></div>
+        <div class="stat-card cyan"><div class="sc-label">Total Saldo Wallet</div><div class="sc-val sm" id="fin-stat-wallets">—</div></div>
+      </div>
+
+      <!-- KOMISI ADMIN PANEL -->
+      <div class="card" style="margin-bottom:20px;border:1px solid rgba(245,158,11,.25);background:linear-gradient(135deg,rgba(245,158,11,.05),transparent);">
+        <div class="card-hd">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:34px;height:34px;border-radius:10px;background:rgba(245,158,11,.15);display:flex;align-items:center;justify-content:center;font-size:18px;">🏆</div>
+            <div><h3 style="color:var(--gold);">Komisi Admin</h3><div style="font-size:11px;color:var(--muted);">Penghasilan platform dari setiap transaksi selesai</div></div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span style="font-size:12px;color:var(--muted);">Rate komisi:</span>
+            <input type="number" id="commissionRateInput" value="5" min="0" max="100" step="0.5" style="width:60px;padding:4px 8px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;">
+            <span style="font-size:12px;color:var(--muted);">%</span>
+            <button class="btn btn-primary btn-sm" onclick="saveCommissionRate()">Simpan Rate</button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;">
+            <div style="background:var(--bg3);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Saldo Komisi Admin</div><div style="font-size:20px;font-weight:800;color:var(--gold);" id="comm-balance">—</div></div>
+            <div style="background:var(--bg3);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Komisi Hari Ini</div><div style="font-size:20px;font-weight:800;color:var(--green);" id="comm-today">—</div></div>
+            <div style="background:var(--bg3);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Komisi Bulan Ini</div><div style="font-size:20px;font-weight:800;color:var(--blue);" id="comm-month">—</div></div>
+            <div style="background:var(--bg3);border-radius:10px;padding:14px;"><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Total All-Time</div><div style="font-size:20px;font-weight:800;color:var(--purple);" id="comm-total">—</div></div>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-size:12px;">
+            <thead><tr style="border-bottom:1px solid var(--border);">
+              <th style="padding:8px;text-align:left;color:var(--dim);">Order ID</th>
+              <th style="padding:8px;text-align:left;color:var(--dim);">Pembeli</th>
+              <th style="padding:8px;text-align:left;color:var(--dim);">Penjual</th>
+              <th style="padding:8px;text-align:right;color:var(--dim);">Gross</th>
+              <th style="padding:8px;text-align:right;color:var(--gold);">Komisi Admin</th>
+              <th style="padding:8px;text-align:right;color:var(--dim);">Net Penjual</th>
+              <th style="padding:8px;text-align:left;color:var(--dim);">Waktu</th>
+            </tr></thead>
+            <tbody id="commissionTableBody">
+              <tr><td colspan="7" style="text-align:center;padding:24px;color:var(--dim);">⏳ Memuat data komisi…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div class="card">
+          <div class="card-hd"><h3>⚙️ Pengaturan Payment Gateway</h3></div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--bg3);border-radius:10px;border:1px solid var(--border);">
+                <div style="display:flex;align-items:center;gap:10px;"><div style="font-size:20px;">💳</div><div><div style="font-weight:600;font-size:13px;">Midtrans</div><div style="font-size:11px;color:var(--muted);">Transfer Bank, QRIS, E-Wallet</div></div></div>
+                <label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--bg3);border-radius:10px;border:1px solid var(--border);">
+                <div style="display:flex;align-items:center;gap:10px;"><div style="font-size:20px;">🏦</div><div><div style="font-weight:600;font-size:13px;">Transfer Manual</div><div style="font-size:11px;color:var(--muted);">BCA, Mandiri, BNI</div></div></div>
+                <label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:var(--bg3);border-radius:10px;border:1px solid var(--border);">
+                <div style="display:flex;align-items:center;gap:10px;"><div style="font-size:20px;">🪙</div><div><div style="font-weight:600;font-size:13px;">USDT / Crypto</div><div style="font-size:11px;color:var(--muted);">TRC20, BEP20</div></div></div>
+                <label class="toggle"><input type="checkbox"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h3>+ Deposit Manual ke User</h3></div>
+          <div class="card-body">
+            <div class="form-group"><label class="form-label">Username User</label><input type="text" class="input" id="depositUserSearch" placeholder="Contoh: budi_85"></div>
+            <div class="form-group"><label class="form-label">Nominal (Rp)</label><input type="number" class="input" id="depositAmount" placeholder="Contoh: 100000"></div>
+            <div class="form-group"><label class="form-label">Keterangan</label><input type="text" class="input" id="depositReason" placeholder="Contoh: Bonus promo Agustus"></div>
+            <button class="btn btn-primary" style="width:100%;" onclick="doDepositManual()">💰 Tambah Saldo</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">
+          <h3>📋 Riwayat Transaksi</h3>
+          <div class="filter-bar" style="margin:0;">
+            <select class="select input-sm" style="width:140px;"><option>Semua Tipe</option><option>Deposit</option><option>Order</option><option>Refund</option></select>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>ID</th><th>User</th><th>Tipe</th><th>Nominal</th><th>Keterangan</th><th>Status</th><th>Waktu</th></tr></thead>
+            <tbody id="financeTableBody">
+            <tbody>
+<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--dim);">⏳ Memuat transaksi…</td></tr>
+              <tr><td style="color:var(--dim);font-size:11px;">TRX-8815</td><td>toko_maya</td><td><span class="badge b-green">Deposit</span></td><td style="color:var(--green);font-weight:700;">+Rp 200.000</td><td style="font-size:12px;">Transfer BCA</td><td><span class="badge b-gold b-dot">Pending</span></td><td style="color:var(--dim);font-size:11px;">1 jam lalu</td><td><div style="display:flex;gap:4px;"><button class="btn btn-green btn-xs" onclick="showToast('Deposit dikonfirmasi ✓','success')">✓ Konfirmasi</button><button class="btn btn-danger btn-xs">Tolak</button></div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    
+
+    <!-- ═══════════════════════ 8. API & OTOMASI ═══════════════════════ -->
+    <div id="tab-api">
+      <div class="page-hd">
+        <div><h1>🔑 API & Otomasi</h1><div class="sub">Kelola API reseller, auto-order, dan drip-feed</div></div>
+        <button class="btn btn-primary btn-sm" onclick="showToast('API key baru dibuat ✓','success')">+ Generate API Key</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div class="card">
+          <div class="card-hd"><h3>🔑 API Keys Reseller</h3></div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                  <div style="font-weight:600;font-size:13px;">rizky_mm <span class="badge b-purple" style="margin-left:6px;">Reseller</span></div>
+                  <div style="display:flex;gap:4px;"><button class="btn btn-ghost btn-xs" onclick="showToast('API key direset','info')">Reset</button><button class="btn btn-danger btn-xs">Cabut</button></div>
+                </div>
+                <div class="api-key-wrap"><div class="key-text">smm_live_a7f3k2p9...x8q4r</div><button class="btn btn-ghost btn-xs" onclick="showToast('Disalin ke clipboard ✓','success')">📋 Copy</button></div>
+                <div style="margin-top:8px;font-size:11px;color:var(--dim);">Dibuat: 12 Jan 2025 · Request hari ini: 1,284</div>
+              </div>
+              <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                  <div style="font-weight:600;font-size:13px;">digital_store99 <span class="badge b-purple" style="margin-left:6px;">Reseller</span></div>
+                  <div style="display:flex;gap:4px;"><button class="btn btn-ghost btn-xs">Reset</button><button class="btn btn-danger btn-xs">Cabut</button></div>
+                </div>
+                <div class="api-key-wrap"><div class="key-text">smm_live_b1m9n7q2...w3e6t</div><button class="btn btn-ghost btn-xs" onclick="showToast('Disalin ke clipboard ✓','success')">📋 Copy</button></div>
+                <div style="margin-top:8px;font-size:11px;color:var(--dim);">Dibuat: 5 Feb 2025 · Request hari ini: 847</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h3>⚡ Pengaturan Otomasi</h3></div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div><div style="font-weight:600;font-size:13px;">Auto Order Processing</div><div style="font-size:11px;color:var(--muted);">Kirim order ke provider otomatis</div></div>
+                <label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div><div style="font-weight:600;font-size:13px;">Auto Update Status</div><div style="font-size:11px;color:var(--muted);">Cek status dari provider tiap 5 menit</div></div>
+                <label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div><div style="font-weight:600;font-size:13px;">Auto Refill Gagal</div><div style="font-size:11px;color:var(--muted);">Refill otomatis jika order error</div></div>
+                <label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div><div style="font-weight:600;font-size:13px;">Drip-feed Mode</div><div style="font-size:11px;color:var(--muted);">Kirim order bertahap untuk keamanan</div></div>
+                <label class="toggle"><input type="checkbox"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;">
+                <div><div style="font-weight:600;font-size:13px;">Auto Refund Timeout</div><div style="font-size:11px;color:var(--muted);">Refund otomatis jika &gt;72 jam tidak selesai</div></div>
+                <label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd"><h3>📖 Dokumentasi API (untuk Reseller)</h3></div>
+        <div class="card-body">
+          <div style="background:var(--bg);border-radius:10px;padding:16px;font-family:monospace;font-size:12px;color:var(--green);overflow-x:auto;">
+            <div style="color:var(--dim);margin-bottom:8px;"># Endpoint: POST https://yourpanel.com/api/v2</div>
+            <div style="margin-bottom:4px;"><span style="color:var(--purple);">key</span>=YOUR_API_KEY &amp; <span style="color:var(--purple);">action</span>=add &amp; <span style="color:var(--purple);">service</span>=1 &amp; <span style="color:var(--purple);">link</span>=https://... &amp; <span style="color:var(--purple);">quantity</span>=1000</div>
+            <div style="color:var(--dim);margin-top:12px;margin-bottom:4px;"># Response JSON:</div>
+            <div>{ "order": 12094 }</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ 9. LAPORAN ═══════════════════════ -->
+    <div id="tab-reports">
+      <div class="page-hd">
+        <div><h1>📈 Laporan & Analytics</h1><div class="sub">Insight mendalam tentang performa platform</div></div>
+        <div style="display:flex;gap:8px;">
+          <select class="select input-sm" style="width:130px;"><option>Bulan Ini</option><option>Minggu Ini</option><option>7 Hari</option><option>30 Hari</option></select>
+          <button class="btn btn-ghost btn-sm" onclick="showToast('Laporan diekspor ✓','success')">⬇ Export PDF</button>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card green"><div class="sc-label">Total Penjualan (GMV)</div><div class="sc-val sm" id="rep-gmv">—</div><div class="sc-sub">↑ 14% vs bulan lalu</div></div>
+        <div class="stat-card gold"><div class="sc-label">Komisi Platform</div><div class="sc-val sm" id="rep-profit">—</div><div class="sc-sub">Margin 29%</div></div>
+        <div class="stat-card blue"><div class="sc-label">Total Order</div><div class="sc-val" id="rep-orders">—</div><div class="sc-sub">↑ 8% vs bulan lalu</div></div>
+        <div class="stat-card purple"><div class="sc-label">Avg Waktu Proses</div><div class="sc-val">18m</div><div class="sc-sub">Lebih cepat 3m</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div class="card">
+          <div class="card-hd"><h3>🏆 Layanan Terlaris</h3></div>
+          <div class="card-body">
+            <div style="display:flex;flex-direction:column;gap:10px;" id="topProductsList">
+              <div><div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px;"><span>IG Followers</span><span style="color:var(--green);font-weight:600;">Rp 8.4 JT</span></div><div class="prog-bar"><div class="prog-fill" style="width:92%;background:var(--purple);"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px;"><span>TikTok Views</span><span style="color:var(--green);font-weight:600;">Rp 6.1 JT</span></div><div class="prog-bar"><div class="prog-fill" style="width:72%;background:var(--cyan);"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px;"><span>YT Subscribers</span><span style="color:var(--green);font-weight:600;">Rp 4.8 JT</span></div><div class="prog-bar"><div class="prog-fill" style="width:58%;background:var(--red);"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px;"><span>FB Likes</span><span style="color:var(--green);font-weight:600;">Rp 3.2 JT</span></div><div class="prog-bar"><div class="prog-fill" style="width:40%;background:var(--blue);"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px;"><span>Twitter Followers</span><span style="color:var(--green);font-weight:600;">Rp 2.1 JT</span></div><div class="prog-bar"><div class="prog-fill" style="width:26%;background:var(--gold);"></div></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h3>⭐ User Teraktif</h3></div>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead><tr><th>#</th><th>User</th><th>Total Spend</th></tr></thead>
+              <tbody id="topBuyersList"><tr><td colspan="3" style="text-align:center;padding:20px;color:var(--dim);">⏳ Memuat…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ 10. SETTINGS ═══════════════════════ -->
+    <div id="tab-settings">
+      <div class="page-hd">
+        <div><h1>⚙️ Pengaturan Website</h1><div class="sub">Konfigurasi tampilan, SEO, dan notifikasi</div></div>
+        <button class="btn btn-primary" onclick="saveSettings()">💾 Simpan Semua</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="card">
+          <div class="card-hd"><h3>🎨 Branding & Tampilan</h3></div>
+          <div class="card-body">
+            <div class="form-group"><label class="form-label">Nama Website</label><input type="text" class="input" id="set-site-name" value="SMMPanel Pro"></div>
+            <div class="form-group"><label class="form-label">Tagline</label><input type="text" class="input" id="set-tagline" value="SMM Panel Terpercaya #1 Indonesia"></div>
+            <div class="form-group"><label class="form-label">Logo URL</label><input type="text" class="input" placeholder="https://…/logo.png"></div>
+            <div class="form-group"><label class="form-label">Favicon URL</label><input type="text" class="input" placeholder="https://…/favicon.ico"></div>
+            <div class="form-group">
+              <label class="form-label">Tema Default</label>
+              <select class="select"><option>Dark Mode</option><option>Light Mode</option><option>Ikuti Sistem</option></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Warna Aksen</label>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <input type="color" value="#7C5CFC" style="width:40px;height:36px;border-radius:8px;border:1px solid var(--border2);background:none;cursor:pointer;padding:2px;">
+                <input type="text" class="input" value="#7C5CFC" style="flex:1;">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div class="card">
+            <div class="card-hd"><h3>🔍 SEO</h3></div>
+            <div class="card-body">
+              <div class="form-group"><label class="form-label">Meta Title</label><input type="text" class="input" id="set-meta-title" value="SMMPanel Pro | SMM Panel Indonesia Terbaik"></div>
+              <div class="form-group"><label class="form-label">Meta Description</label><textarea class="input" rows="2">Panel SMM terbaik Indonesia, harga murah, proses cepat, 247 layanan tersedia.</textarea></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-hd"><h3>🔔 Notifikasi Email</h3></div>
+            <div class="card-body">
+              <div style="display:flex;flex-direction:column;gap:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;"><div style="font-size:13px;">Email order baru masuk</div><label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;"><div style="font-size:13px;">Email deposit berhasil</div><label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;"><div style="font-size:13px;">Email saldo provider rendah</div><label class="toggle"><input type="checkbox" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;"><div style="font-size:13px;">Email tiket support baru</div><label class="toggle"><input type="checkbox"><div class="toggle-track"></div><div class="toggle-thumb"></div></label></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="grid-column:1/-1;">
+          <div class="card-hd"><h3>📄 Halaman Kustom</h3></div>
+          <div class="card-body">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button class="btn btn-ghost" onclick="showToast('Editor FAQ dibuka','info')">✏️ Edit FAQ</button>
+              <button class="btn btn-ghost" onclick="showToast('Editor Terms dibuka','info')">✏️ Edit Syarat & Ketentuan</button>
+              <button class="btn btn-ghost" onclick="showToast('Editor Contact dibuka','info')">✏️ Edit Kontak</button>
+              <button class="btn btn-ghost" onclick="showToast('Editor About dibuka','info')">✏️ Edit Tentang Kami</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════ 11. KEAMANAN ═══════════════════════ -->
+    <div id="tab-security">
+      <div class="page-hd">
+        <div><h1>🔒 Keamanan</h1><div class="sub">Monitoring akses, log, dan manajemen hak akses</div></div>
+      </div>
+
+      <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-card green"><div class="sc-label">Login Sukses (24j)</div><div class="sc-val">1,284</div></div>
+        <div class="stat-card red"><div class="sc-label">Login Gagal (24j)</div><div class="sc-val">47</div></div>
+        <div class="stat-card blue"><div class="sc-label">Sesi Aktif</div><div class="sc-val">312</div></div>
+        <div class="stat-card gold"><div class="sc-label">IP Diblokir</div><div class="sc-val">8</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div class="card">
+          <div class="card-hd"><h3>👥 Manajemen Staff & Role</h3><button class="btn btn-primary btn-sm" onclick="showToast('Form tambah staff dibuka','info')">+ Tambah Staff</button></div>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead><tr><th>Nama</th><th>Role</th><th>Akses</th><th>Terakhir Login</th><th>Aksi</th></tr></thead>
+              <tbody>
+                <tr><td><div style="font-weight:600;">Ahmad (Super Admin)</div><div style="font-size:11px;color:var(--muted);">@ahmad_admin</div></td><td><span class="badge b-red">Super Admin</span></td><td style="font-size:12px;color:var(--muted);">Full Access</td><td style="font-size:11px;color:var(--dim);">Sekarang</td><td>—</td></tr>
+                <tr><td><div style="font-weight:600;">Dewi (Staff)</div><div style="font-size:11px;color:var(--muted);">@dewi_cs</div></td><td><span class="badge b-blue">CS Staff</span></td><td style="font-size:12px;color:var(--muted);">Orders, Tickets</td><td style="font-size:11px;color:var(--dim);">2 jam lalu</td><td><button class="btn btn-ghost btn-xs" onclick="openModal('editRole')">Edit Hak</button></td></tr>
+                <tr><td><div style="font-weight:600;">Faisal (Finance)</div><div style="font-size:11px;color:var(--muted);">@faisal_fin</div></td><td><span class="badge b-gold">Finance</span></td><td style="font-size:12px;color:var(--muted);">Finance, Reports</td><td style="font-size:11px;color:var(--dim);">1 hari lalu</td><td><button class="btn btn-ghost btn-xs">Edit Hak</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><h3>🚫 IP Diblokir</h3><button class="btn btn-ghost btn-sm" onclick="showToast('Tambah IP diblokir','info')">+ Blokir IP</button></div>
+          <div class="tbl-wrap">
+            <table class="tbl">
+              <thead><tr><th>IP Address</th><th>Alasan</th><th>Sejak</th><th>Aksi</th></tr></thead>
+              <tbody>
+                <tr><td style="font-family:monospace;font-size:12px;">192.168.44.21</td><td style="font-size:12px;">Brute force login</td><td style="font-size:11px;color:var(--dim);">2 jam lalu</td><td><button class="btn btn-green btn-xs" onclick="showToast('IP dibuka blokir','success')">Buka</button></td></tr>
+                <tr><td style="font-family:monospace;font-size:12px;">103.74.19.88</td><td style="font-size:12px;">Spam API request</td><td style="font-size:11px;color:var(--dim);">1 hari lalu</td><td><button class="btn btn-green btn-xs">Buka</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hd">
+          <h3>📜 Activity Log Admin</h3>
+          <div class="filter-bar" style="margin:0;">
+            <select class="select input-sm" style="width:150px;"><option>Semua Aksi</option><option>Login</option><option>Edit Order</option><option>Edit User</option><option>Keuangan</option></select>
+          </div>
+        </div>
+        <div>
+<div id="adminLogsBody"><div class="log-item"><div class="log-meta" style="color:var(--dim);">⏳ Memuat log admin…</div></div></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ── MODALS ── -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal-card" id="modalCard">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h3 id="modalTitle">Modal</h3>
+    <p class="sub" id="modalSub"></p>
+    <div id="modalBody"></div>
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
+<!-- ── ORDER DETAIL MODAL ── -->
+<div class="modal-overlay" id="orderModal" onclick="if(event.target===this)closeOrderModal()">
+  <div class="modal-card" style="max-width:500px;">
+    <button class="modal-close" onclick="closeOrderModal()">✕</button>
+    <h3>Detail Order #12093</h3>
+    <p class="sub">TikTok Views · rizky_mm</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+      <div style="background:var(--bg3);border-radius:8px;padding:12px;"><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Layanan</div><div style="font-weight:600;font-size:13px;">TikTok Views</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:12px;"><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Quantity</div><div style="font-weight:600;font-size:13px;">50,000</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:12px;"><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Harga</div><div style="font-weight:600;font-size:13px;color:var(--green);">Rp 25.000</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:12px;"><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Provider</div><div style="font-weight:600;font-size:13px;">ProviderB</div></div>
+      <div style="background:var(--bg3);border-radius:8px;padding:12px;grid-column:1/-1;"><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Link Target</div><div style="font-family:monospace;font-size:12px;color:var(--cyan);">tiktok.com/@rizky/video/123…</div></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Ubah Status</label>
+      <select class="select"><option>Processing</option><option>Completed</option><option>Cancelled</option><option>Error</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeOrderModal()">Tutup</button>
+      <button class="btn btn-green" onclick="doRefillOrder()">🔄 Refill</button>
+      <button class="btn btn-primary" onclick="saveOrderStatus()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ── SUPABASE SDK ── -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<script>
+/* ================================================================
+   KONFIGURASI SUPABASE — ganti dengan URL & ANON KEY project kamu
+   ================================================================ */
+// ⚠️ GANTI INI dengan URL & ANON KEY dari Supabase project kamu
+// Buka: https://supabase.com/dashboard → project kamu → Settings → API
+const SUPABASE_URL  = 'https://aktgklmbrxwohugrfjrr.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_wML_Y0Ph9MRkRGbg8Edw1g_17GwQdxE';
+
+// ── KOMISI ADMIN (ubah sesuai kebutuhan) ──
+const COMMISSION_RATE = 0.05; // 5% komisi dari setiap transaksi selesai
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+/* ── HELPERS ── */
+function fmtRp(n) {
+  if(n === null || n === undefined) return 'Rp 0';
+  if(n >= 1_000_000_000) return 'Rp ' + (n/1_000_000_000).toFixed(1) + ' M';
+  if(n >= 1_000_000)     return 'Rp ' + (n/1_000_000).toFixed(1) + ' JT';
+  return 'Rp ' + Number(n).toLocaleString('id-ID');
+}
+function timeAgo(ts) {
+  if(!ts) return '-';
+  const s = Math.floor((Date.now() - new Date(ts)) / 1000);
+  if(s < 60)   return s + ' dtk lalu';
+  if(s < 3600) return Math.floor(s/60) + ' mnt lalu';
+  if(s < 86400)return Math.floor(s/3600) + ' jam lalu';
+  return Math.floor(s/86400) + ' hari lalu';
+}
+function statusBadge(status) {
+  const map = {
+    completed:'b-green',pending_payment:'b-gold',paid:'b-blue',
+    processing:'b-blue',delivered:'b-cyan',disputed:'b-red',
+    refunded:'b-purple',cancelled:'b-gray',
+    // compat SMM panel
+    pending:'b-gold',processing2:'b-blue',error:'b-red',partial:'b-gold',
+  };
+  const cls = map[status] || 'b-gray';
+  const label = {
+    completed:'Selesai',pending_payment:'Belum Bayar',paid:'Dibayar',
+    processing:'Diproses',delivered:'Dikirim',disputed:'Sengketa',
+    refunded:'Direfund',cancelled:'Dibatalkan',
+    pending:'Pending',error:'Error',partial:'Partial',
+  }[status] || status;
+  return `<span class="badge ${cls} b-dot">${label}</span>`;
+}
+function roleBadge(role) {
+  const cls = {pembeli:'b-blue',penjual:'b-green',admin:'b-red',reseller:'b-purple'}[role]||'b-gray';
+  return `<span class="badge ${cls}">${role}</span>`;
+}
+function avatar(name, colors=['var(--accent)','var(--cyan)']) {
+  const init = (name||'?')[0].toUpperCase();
+  return `<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,${colors[0]},${colors[1]});display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">${init}</div>`;
+}
+
+/* ── NAV ── */
+function nav(name, el) {
+  document.querySelectorAll('[id^="tab-"]').forEach(t => t.classList.remove('active'));
+  const tab = document.getElementById('tab-' + name);
+  if(tab) tab.classList.add('active');
+  document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+  if(el) el.classList.add('active');
+  window.scrollTo(0, 0);
+  // lazy-load tab data
+  if(name === 'orders')   loadOrders();
+  if(name === 'users')    loadUsers();
+  if(name === 'finance')  { loadFinance(); loadCommission(); }
+  if(name === 'security') loadAdminLogs();
+  if(name === 'services') loadServices();
+  if(name === 'reports')  loadReports();
+}
+
+/* ── TOAST ── */
+function showToast(msg, type = 'info') {
+  const wrap = document.getElementById('toastWrap');
+  const icons = { success:'✓', error:'✕', info:'ℹ' };
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${icons[type]||'ℹ'}</span> ${msg}`;
+  wrap.appendChild(t);
+  setTimeout(() => { t.style.opacity='0'; t.style.transition='opacity .3s'; setTimeout(()=>t.remove(),300); }, 3200);
+}
+
+/* ── MODAL UMUM ── */
+const modals = {
+  addUser:{ title:'+ Tambah User', sub:'Buat akun user baru', body:`
+    <div class="form-group"><label class="form-label">Nama Lengkap</label><input type="text" class="input" id="newUserName" placeholder="Nama user"></div>
+    <div class="form-group"><label class="form-label">Email</label><input type="email" class="input" id="newUserEmail" placeholder="email@contoh.com"></div>
+    <div class="form-group"><label class="form-label">Password</label><input type="password" class="input" id="newUserPwd" placeholder="Min 8 karakter"></div>
+    <div class="form-group"><label class="form-label">Role</label><select class="select" id="newUserRole"><option value="pembeli">Pembeli</option><option value="penjual">Penjual</option><option value="admin">Admin</option></select></div>
+  `, action:`<button class="btn btn-ghost" onclick="closeModal()">Batal</button><button class="btn btn-primary" onclick="doCreateUser()">Buat User</button>` },
+  addService:{ title:'+ Tambah Layanan', sub:'Tambah layanan produk baru', body:`
+    <div class="form-group"><label class="form-label">Nama Layanan</label><input type="text" class="input" id="svcTitle" placeholder="Contoh: Instagram Followers HQ"></div>
+    <div class="form-group"><label class="form-label">Kategori</label><select class="select" id="svcCat"><option value="digital">Digital</option><option value="game">Game</option><option value="jasa">Jasa</option></select></div>
+    <div class="form-group"><label class="form-label">Harga (Rp)</label><input type="number" class="input" id="svcPrice" placeholder="Rp"></div>
+    <div class="form-group"><label class="form-label">Stok</label><input type="number" class="input" id="svcStock" value="99"></div>
+  `, action:`<button class="btn btn-ghost" onclick="closeModal()">Batal</button><button class="btn btn-primary" onclick="doCreateProduct()">Tambah</button>` },
+  addProvider:{ title:'+ Tambah Provider', sub:'Hubungkan API provider baru', body:`
+    <div class="form-group"><label class="form-label">Nama Provider</label><input type="text" class="input" placeholder="Nama tampilan"></div>
+    <div class="form-group"><label class="form-label">URL API</label><input type="url" class="input" placeholder="https://provider.com/api/v2"></div>
+    <div class="form-group"><label class="form-label">API Key</label><input type="text" class="input" placeholder="API key dari provider"></div>
+    <div class="form-group"><label class="form-label">Mata Uang</label><select class="select"><option>USD</option><option>IDR</option></select></div>
+  `, action:`<button class="btn btn-ghost" onclick="closeModal()">Batal</button><button class="btn btn-primary" onclick="showToast('Fitur ini perlu tabel providers di Supabase','info');closeModal()">Hubungkan</button>` },
+  editRole:{ title:'⚙️ Edit Hak Akses', sub:'Atur role pengguna', body:`
+    <div class="form-group"><label class="form-label">User ID</label><input type="text" class="input" id="erUserId" placeholder="UUID pengguna"></div>
+    <div class="form-group"><label class="form-label">Role Baru</label><select class="select" id="erRole"><option value="pembeli">Pembeli</option><option value="penjual">Penjual</option><option value="admin">Admin</option></select></div>
+  `, action:`<button class="btn btn-ghost" onclick="closeModal()">Batal</button><button class="btn btn-primary" onclick="doChangeRole()">Simpan</button>` },
+};
+
+function openModal(key) {
+  const m = modals[key]; if(!m) return;
+  document.getElementById('modalTitle').textContent = m.title;
+  document.getElementById('modalSub').textContent   = m.sub;
+  document.getElementById('modalBody').innerHTML    = m.body;
+  document.getElementById('modalActions').innerHTML = m.action;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+
+/* ── ORDER DETAIL MODAL ── */
+let _currentOrderId = null;
+let _currentOrderData = null; // simpan data order aktif
+
+async function openOrderDetail(orderId) {
+  _currentOrderId = orderId;
+  const { data: o, error } = await sb
+    .from('admin_orders_view')
+    .select('*')
+    .eq('id', orderId)
+    .single();
+  if(error || !o) { showToast('Gagal memuat order','error'); return; }
+  _currentOrderData = o; // simpan untuk dipakai saveOrderStatus
+
+  document.querySelector('#orderModal h3').textContent = `Detail Order`;
+  document.querySelector('#orderModal .sub').textContent = `${o.product_title} · ${o.buyer_username||o.buyer_name}`;
+  document.querySelector('#orderModal .modal-card > div[style*="grid"]').innerHTML = `
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;"><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Produk</div><div style="font-weight:600;font-size:13px;">${o.product_title}</div></div>
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;"><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Status</div><div>${statusBadge(o.status)}</div></div>
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;"><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Total</div><div style="font-weight:600;font-size:13px;color:var(--green);">${fmtRp(o.total_amount)}</div></div>
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;"><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Fee Platform</div><div style="font-weight:600;font-size:13px;">${fmtRp(o.platform_fee)}</div></div>
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;"><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Pembeli</div><div style="font-weight:600;font-size:13px;">${o.buyer_name}</div></div>
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;"><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Penjual</div><div style="font-weight:600;font-size:13px;">${o.seller_name}</div></div>
+    <div style="background:var(--bg3);border-radius:8px;padding:12px;grid-column:1/-1;"><div style="font-size:11px;color:var(--dim);margin-bottom:4px;">Dibuat</div><div style="font-family:monospace;font-size:12px;color:var(--cyan);">${new Date(o.created_at).toLocaleString('id-ID')}</div></div>
+  `;
+  const sel = document.querySelector('#orderModal select');
+  sel.innerHTML = ['pending_payment','paid','processing','delivered','completed','disputed','refunded','cancelled']
+    .map(s=>`<option value="${s}" ${s===o.status?'selected':''}>${s}</option>`).join('');
+  document.getElementById('orderModal').classList.add('open');
+}
+
+async function doRefillOrder() {
+  if(!_currentOrderId) return;
+  if(!confirm("Jadwalkan ulang (refill) order ini?")) return;
+  const { error } = await sb
+    .from("orders")
+    .update({ status: "processing", updated_at: new Date().toISOString() })
+    .eq("id", _currentOrderId);
+  if(error) { showToast("Gagal refill: "+error.message,"error"); return; }
+  showToast("Refill dijadwalkan ✓","success");
+  closeOrderModal();
+  loadOrders();
+  loadDashboard();
+}
+
+async function saveOrderStatus() {
+  if(!_currentOrderId) return;
+  const sel = document.querySelector('#orderModal select');
+  const newStatus = sel.value;
+  const o = _currentOrderData;
+
+  /* ── Jika status dipilih "refunded", jalankan alur refund wallet ── */
+  if(newStatus === 'refunded') {
+    const prevStatus = o?.status || '';
+    // Cegah double-refund
+    if(prevStatus === 'refunded') {
+      showToast('Order ini sudah berstatus refunded sebelumnya','error');
+      return;
+    }
+    if(!confirm(`Refund ${fmtRp(o?.total_amount)} ke wallet pembeli (${o?.buyer_name})?\nTindakan ini tidak dapat dibatalkan.`)) return;
+
+    /* Coba via RPC admin_force_refund dulu (sudah handle wallet + log) */
+    const { data: rData, error: rErr } = await sb.rpc('admin_force_refund', {
+      p_order_id: _currentOrderId,
+      p_reason: 'Refund oleh admin via dashboard'
+    });
+
+    if(rErr || !rData?.ok) {
+      /* Fallback: update status manual + kredit wallet buyer langsung */
+      console.error('admin_force_refund gagal →', rErr || rData);
+      const alasanGagal = rErr?.message || rData?.error || 'tidak diketahui';
+      showToast('RPC refund gagal ('+alasanGagal+'), coba fallback manual…','info');
+
+      // 1. Kredit saldo ke wallet buyer DULU (sebelum ubah status).
+      //    Kalau ini gagal, status order TIDAK diubah — supaya admin bisa
+      //    retry tanpa order "nyangkut" refunded tapi uang belum pindah.
+      if(o?.buyer_id && o?.total_amount > 0) {
+        const { data: wData, error: wErr } = await sb.rpc('admin_adjust_wallet', {
+          p_user_id: o.buyer_id,
+          p_amount: o.total_amount,
+          p_reason: `Refund order #${_currentOrderId.slice(0,8)}`
+        });
+        // PENTING: cek wErr (error level RPC/network) DAN wData.ok (error level bisnis).
+        // admin_adjust_wallet selalu return 200 dengan {ok:false, error:...} saat gagal
+        // (misal wallet tidak ditemukan, saldo akan negatif, dsb) — itu BUKAN error
+        // Supabase, jadi wErr akan null meski refund sebenarnya gagal.
+        if(wErr || !wData?.ok) {
+          const alasanWallet = wErr?.message || wData?.error || 'tidak diketahui';
+          showToast('Kredit wallet gagal, status TIDAK diubah: '+alasanWallet,'error');
+          closeOrderModal(); loadOrders(); loadDashboard(); return;
+        }
+      }
+
+      // 2. Baru update status order ke refunded, setelah uang dipastikan masuk
+      const { error: updErr } = await sb
+        .from('orders')
+        .update({ status: 'refunded', updated_at: new Date().toISOString() })
+        .eq('id', _currentOrderId);
+      if(updErr) {
+        showToast('Wallet sudah dikredit tapi gagal update status: '+updErr.message,'error');
+        closeOrderModal(); loadOrders(); loadDashboard(); return;
+      }
+
+      showToast(`Refund ${fmtRp(o?.total_amount)} berhasil dikirim ke wallet ${o?.buyer_name} ✓`, 'success');
+    } else {
+      showToast(`Refund ${fmtRp(o?.total_amount)} berhasil → wallet ${o?.buyer_name} ✓`, 'success');
+    }
+
+    closeOrderModal();
+    loadOrders();
+    loadDashboard();
+    return;
+  }
+
+  /* ── Status lain: update biasa ── */
+  const { data, error } = await sb.rpc('admin_update_order_status', {
+    p_order_id: _currentOrderId,
+    p_new_status: newStatus,
+    p_note: 'Diubah admin via dashboard'
+  });
+  if(error || !data?.ok) {
+    console.error('admin_update_order_status gagal →', error || data);
+    // Fallback: update langsung ke tabel orders
+    const { error: fallbackErr } = await sb
+      .from('orders')
+      .update({ status: newStatus, updated_at: new Date().toISOString() })
+      .eq('id', _currentOrderId);
+    if(fallbackErr) { showToast('Gagal update status: '+fallbackErr.message,'error'); return; }
+  }
+  showToast('Status diperbarui ✓','success');
+  closeOrderModal();
+  loadOrders();
+  loadDashboard();
+}
+
+async function forceRefund() {
+  if(!_currentOrderId) return;
+  const reason = prompt('Alasan refund:');
+  if(!reason) return;
+  const { data, error } = await sb.rpc('admin_force_refund', { p_order_id: _currentOrderId, p_reason: reason });
+  if(error || !data?.ok) { console.error('admin_force_refund gagal →', error || data); showToast('Gagal refund: '+(data?.error||error?.message||'tidak diketahui'),'error'); return; }
+  showToast('Refund berhasil ✓','success');
+  closeOrderModal();
+  loadOrders();
+  loadDashboard();
+}
+function closeOrderModal() { document.getElementById('orderModal').classList.remove('open'); _currentOrderId=null; }
+function openUserEdit(userId) { openModal('editRole'); if(userId) setTimeout(()=>{ const el=document.getElementById('erUserId'); if(el) el.value=userId; },50); }
+function toggleAll(cb) { document.querySelectorAll('#ordersTable tbody input[type=checkbox]').forEach(c=>c.checked=cb.checked); }
+document.addEventListener('keydown', e => { if(e.key==='Escape'){closeModal();closeOrderModal();} });
+
+/* ================================================================
+   1. DASHBOARD STATS — dari admin_stats view (Supabase)
+   ================================================================ */
+async function loadDashboard() {
+  // Stats dari admin_stats view
+  const { data: stats, error: se } = await sb.from('admin_stats').select('*').single();
+  if(!se && stats) {
+    setText('stat-total-orders',    Number(stats.total_orders||0).toLocaleString('id-ID'));
+    setText('stat-completed-orders',Number(stats.completed_orders||0).toLocaleString('id-ID'));
+    setText('stat-pending-orders',  Number(stats.pending_orders||0).toLocaleString('id-ID'));
+    setText('stat-disputed-orders', Number(stats.disputed_orders||0).toLocaleString('id-ID'));
+    setText('stat-gmv',             fmtRp(stats.gmv_completed));
+    setText('stat-revenue',         fmtRp(stats.platform_revenue));
+    setText('stat-total-users',     Number((stats.total_buyers||0)+(stats.total_sellers||0)).toLocaleString('id-ID'));
+    setText('stat-suspended',       Number(stats.total_suspended||0).toLocaleString('id-ID'));
+    setText('stat-escrow',          fmtRp(stats.total_escrow_held));
+    // sidebar badge
+    setText('pendingBadge', stats.pending_orders||0);
+  }
+
+  // Revenue chart 7 hari (ambil dari orders real)
+  const d7 = new Date(); d7.setDate(d7.getDate()-6); d7.setHours(0,0,0,0);
+  const { data: revData } = await sb
+    .from('orders')
+    .select('created_at, total_amount, status')
+    .gte('created_at', d7.toISOString())
+    .eq('status','completed');
+  drawRevenueChart(revData||[]);
+
+  // Aktivitas terbaru — order terbaru
+  const { data: recent } = await sb
+    .from('admin_orders_view')
+    .select('id,product_title,status,created_at,buyer_username,buyer_name')
+    .order('created_at', {ascending:false})
+    .limit(5);
+  renderActivity(recent||[]);
+
+  // Order bermasalah (disputed/error)
+  const { data: troubled } = await sb
+    .from('admin_orders_view')
+    .select('id,product_title,buyer_username,buyer_name,status,total_amount,created_at')
+    .in('status', ['disputed','refunded'])
+    .order('created_at', {ascending:false})
+    .limit(5);
+  renderTroubledOrders(troubled||[]);
+}
+
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if(el) el.textContent = val;
+}
+
+function drawRevenueChart(orders) {
+  const chart = document.getElementById('revenueChart');
+  if(!chart) return;
+  // Kelompokkan per hari (7 hari terakhir)
+  const days = [];
+  const labels = [];
+  const dayNames = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+  for(let i=6; i>=0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const key = d.toISOString().slice(0,10);
+    days.push(key);
+    labels.push(dayNames[d.getDay()]);
+  }
+  const totals = days.map(day =>
+    orders.filter(o => o.created_at?.slice(0,10) === day)
+          .reduce((s,o) => s + (o.total_amount||0), 0)
+  );
+  const max = Math.max(...totals, 1);
+  chart.innerHTML = totals.map((v,i)=>{
+    const pct = Math.max((v/max)*100, 4);
+    const isMax = v===max && v>0;
+    return `<div class="chart-bar" style="height:${pct}%;background:${isMax?'var(--green)':'var(--accent)'};opacity:${isMax?1:.75};" title="${labels[i]}: ${fmtRp(v)}"></div>`;
+  }).join('');
+  // Update label hari
+  const labelEl = chart.nextElementSibling;
+  if(labelEl) labelEl.innerHTML = labels.map(l=>`<span>${l}</span>`).join('');
+}
+
+function renderActivity(orders) {
+  const el = document.getElementById('recentActivity');
+  if(!el) return;
+  if(!orders.length) { el.innerHTML = '<div class="empty"><p>Belum ada aktivitas</p></div>'; return; }
+  const iconMap = {completed:'✅',pending_payment:'⏳',paid:'💳',processing:'⚙️',delivered:'📦',disputed:'⚠️',refunded:'💸',cancelled:'❌'};
+  el.innerHTML = orders.map(o=>`
+    <div class="log-item">
+      <div class="log-icon">${iconMap[o.status]||'📦'}</div>
+      <div>
+        <div class="log-action">${o.product_title||'Order'} · ${o.status}</div>
+        <div class="log-meta">${o.buyer_username||o.buyer_name||''} · ${timeAgo(o.created_at)}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderTroubledOrders(orders) {
+  const el = document.getElementById('troubledOrdersBody');
+  if(!el) return;
+  if(!orders.length) { el.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--dim);padding:24px;">Tidak ada order bermasalah 🎉</td></tr>'; return; }
+  el.innerHTML = orders.map(o=>`
+    <tr>
+      <td style="color:var(--dim);font-size:11px;">${o.id.slice(0,8)}</td>
+      <td>${o.product_title||'-'}</td>
+      <td>${o.buyer_username||o.buyer_name||'-'}</td>
+      <td>${fmtRp(o.total_amount)}</td>
+      <td>${statusBadge(o.status)}</td>
+      <td style="color:var(--dim);font-size:12px;">${timeAgo(o.created_at)}</td>
+      <td>
+        <button class="btn btn-ghost btn-xs" onclick="openOrderDetail('${o.id}')">Detail</button>
+        <button class="btn btn-green btn-xs" onclick="doRefund('${o.id}')">Refund</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function doRefund(orderId) {
+  const reason = prompt('Alasan refund:');
+  if(reason === null) return;
+  const { data, error } = await sb.rpc('admin_force_refund', { p_order_id: orderId, p_reason: reason||'Admin action' });
+  if(error || !data?.ok) { console.error('admin_force_refund gagal →', error || data); showToast('Gagal: '+(data?.error||error?.message||'tidak diketahui'),'error'); return; }
+  showToast('Refund berhasil ✓','success');
+  loadDashboard();
+}
+
+/* ================================================================
+   2. ORDERS TAB
+   ================================================================ */
+let _ordersPage = 0;
+const _ordersLimit = 20;
+
+async function loadOrders(search='', status='') {
+  const tbody = document.querySelector('#ordersTable tbody');
+  if(!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--dim);">⏳ Memuat data…</td></tr>`;
+
+  let q = sb.from('admin_orders_view')
+    .select('id,product_title,buyer_username,buyer_name,seller_username,seller_name,total_amount,status,created_at,quantity,platform_fee')
+    .order('created_at', {ascending:false})
+    .range(_ordersPage*_ordersLimit, (_ordersPage+1)*_ordersLimit-1);
+
+  if(search) q = q.or(`product_title.ilike.%${search}%,buyer_username.ilike.%${search}%,buyer_name.ilike.%${search}%`);
+  if(status && status !== 'Semua Status') q = q.eq('status', status);
+
+  const { data, error } = await q;
+  if(error) { tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;color:var(--red);">Error: ${error.message}</td></tr>`; return; }
+
+  if(!data.length) { tbody.innerHTML=`<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--dim);">Tidak ada order ditemukan</td></tr>`; return; }
+
+  tbody.innerHTML = data.map(o=>`
+    <tr>
+      <td><input type="checkbox"></td>
+      <td style="color:var(--dim);font-size:11px;">${o.id.slice(0,8)}</td>
+      <td style="max-width:140px;font-weight:600;">${o.product_title||'-'}</td>
+      <td>${o.buyer_username||o.buyer_name||'-'}</td>
+      <td style="font-size:11px;color:var(--muted);">${o.seller_username||o.seller_name||'-'}</td>
+      <td>${o.quantity||1}</td>
+      <td style="color:var(--green);">${fmtRp(o.total_amount)}</td>
+      <td>${statusBadge(o.status)}</td>
+      <td style="font-size:11px;color:var(--dim);">${fmtRp(o.platform_fee)}</td>
+      <td style="color:var(--dim);font-size:11px;">${timeAgo(o.created_at)}</td>
+      <td>
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-ghost btn-xs" onclick="openOrderDetail('${o.id}')">Detail</button>
+          ${['paid','processing','delivered','disputed'].includes(o.status)?`<button class="btn btn-danger btn-xs" onclick="doRefund('${o.id}')">Refund</button>`:''}
+        </div>
+      </td>
+    </tr>
+  `).join('');
+
+  // Update stat cards orders tab
+  const { data: stats } = await sb.from('admin_stats').select('total_orders,pending_orders,completed_orders,disputed_orders').single();
+  if(stats) {
+    setText('ord-stat-all',       Number(stats.total_orders||0).toLocaleString('id-ID'));
+    setText('ord-stat-pending',   Number(stats.pending_orders||0).toLocaleString('id-ID'));
+    setText('ord-stat-completed', Number(stats.completed_orders||0).toLocaleString('id-ID'));
+    setText('ord-stat-disputed',  Number(stats.disputed_orders||0).toLocaleString('id-ID'));
+  }
+}
+
+function filterOrders(val) {
+  const search = typeof val === 'string' ? val : document.querySelector('[oninput*="filterOrders"]')?.value || '';
+  const statusSel = document.querySelector('[onchange*="filterOrders"]');
+  const status = statusSel ? statusSel.value : '';
+  _ordersPage = 0;
+  loadOrders(search, status === 'Semua Status' ? '' : status);
+}
+
+/* ================================================================
+   3. USERS TAB
+   ================================================================ */
+async function loadUsers(search='', role='', status='') {
+  const tbody = document.getElementById('usersTableBody');
+  if(!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--dim);">⏳ Memuat data…</td></tr>`;
+
+  let q = sb.from('profiles')
+    .select('id,full_name,username,role,is_suspended,created_at,wallets(balance),orders(count)')
+    .order('created_at', {ascending:false})
+    .limit(50);
+
+  if(search) q = q.or(`full_name.ilike.%${search}%,username.ilike.%${search}%`);
+  if(role && role !== 'Semua Role') q = q.eq('role', role.toLowerCase());
+  if(status === 'Suspended') q = q.eq('is_suspended', true);
+  else if(status === 'Aktif') q = q.eq('is_suspended', false);
+
+  const { data, error } = await q;
+  if(error) { tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:var(--red);">${error.message}</td></tr>`; return; }
+  if(!data.length) { tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--dim);">Tidak ada user</td></tr>`; return; }
+
+  tbody.innerHTML = data.map(u => {
+    const bal = u.wallets?.[0]?.balance ?? 0;
+    const orderCount = u.orders?.[0]?.count ?? 0;
+    const isSuspended = u.is_suspended;
+    const joined = u.created_at ? new Date(u.created_at).toLocaleDateString('id-ID',{month:'short',year:'numeric'}) : '-';
+    return `
+    <tr>
+      <td><div style="display:flex;align-items:center;gap:8px;">${avatar(u.full_name||u.username)}<div><div style="font-weight:600;">${u.full_name||'-'}</div><div style="font-size:11px;color:var(--muted);">@${u.username||'-'}</div></div></div></td>
+      <td style="font-size:12px;color:var(--muted);font-family:monospace;">${u.id.slice(0,12)}…</td>
+      <td>${roleBadge(u.role)}</td>
+      <td style="color:var(--green);font-weight:700;">${fmtRp(bal)}</td>
+      <td>${orderCount}</td>
+      <td>${isSuspended ? '<span class="badge b-red b-dot">Suspended</span>' : '<span class="badge b-green b-dot">Aktif</span>'}</td>
+      <td style="font-size:11px;color:var(--dim);">${joined}</td>
+      <td>
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-ghost btn-xs" onclick="openUserEdit('${u.id}')">Edit Role</button>
+          <button class="btn btn-ghost btn-xs" onclick="openAdjustWallet('${u.id}','${u.full_name||u.username}')">💰 Saldo</button>
+          ${isSuspended
+            ? `<button class="btn btn-green btn-xs" onclick="doSuspend('${u.id}',false)">Aktifkan</button>`
+            : `<button class="btn btn-danger btn-xs" onclick="doSuspend('${u.id}',true)">Suspend</button>`
+          }
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  // Update stat cards
+  const { data: stats } = await sb.from('admin_stats').select('total_buyers,total_sellers,total_suspended').single();
+  if(stats) {
+    setText('usr-stat-total',     Number((stats.total_buyers||0)+(stats.total_sellers||0)).toLocaleString('id-ID'));
+    setText('usr-stat-active',    Number(((stats.total_buyers||0)+(stats.total_sellers||0))-(stats.total_suspended||0)).toLocaleString('id-ID'));
+    setText('usr-stat-suspended', Number(stats.total_suspended||0).toLocaleString('id-ID'));
+  }
+}
+
+async function doSuspend(userId, suspend) {
+  const reason = suspend ? prompt('Alasan suspend:') : null;
+  if(suspend && reason === null) return;
+  const { data, error } = await sb.rpc('admin_suspend_user', { p_user_id: userId, p_suspend: suspend, p_reason: reason });
+  if(error || !data?.ok) { showToast('Gagal: '+(data?.error||error?.message),'error'); return; }
+  showToast(suspend ? 'User disuspend ✓' : 'User diaktifkan ✓','success');
+  loadUsers();
+}
+
+async function doChangeRole() {
+  const userId = document.getElementById('erUserId')?.value?.trim();
+  const role   = document.getElementById('erRole')?.value;
+  if(!userId) { showToast('Masukkan UUID user','error'); return; }
+  const { data, error } = await sb.rpc('admin_change_role', { p_user_id: userId, p_new_role: role });
+  if(error || !data?.ok) { showToast('Gagal: '+(data?.error||error?.message),'error'); return; }
+  showToast('Role diubah ✓','success');
+  closeModal();
+  loadUsers();
+}
+
+function openAdjustWallet(userId, name) {
+  document.getElementById('modalTitle').textContent = '💰 Sesuaikan Saldo';
+  document.getElementById('modalSub').textContent   = name;
+  document.getElementById('modalBody').innerHTML    = `
+    <div class="form-group"><label class="form-label">Jumlah (Rp) — gunakan minus untuk kurangi</label><input type="number" class="input" id="adjAmount" placeholder="Contoh: 50000 atau -10000"></div>
+    <div class="form-group"><label class="form-label">Alasan (wajib)</label><input type="text" class="input" id="adjReason" placeholder="Contoh: Bonus referral"></div>
+  `;
+  document.getElementById('modalActions').innerHTML = `
+    <button class="btn btn-ghost" onclick="closeModal()">Batal</button>
+    <button class="btn btn-primary" onclick="doAdjustWallet('${userId}')">Terapkan</button>
+  `;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+async function doAdjustWallet(userId) {
+  const amount = parseInt(document.getElementById('adjAmount')?.value);
+  const reason = document.getElementById('adjReason')?.value?.trim();
+  if(isNaN(amount)||!reason) { showToast('Isi jumlah dan alasan','error'); return; }
+  const { data, error } = await sb.rpc('admin_adjust_wallet', { p_user_id: userId, p_amount: amount, p_reason: reason });
+  if(error || !data?.ok) { showToast('Gagal: '+(data?.error||error?.message),'error'); return; }
+  showToast(`Saldo disesuaikan → ${fmtRp(data.new_balance)} ✓`,'success');
+  closeModal();
+  loadUsers();
+}
+
+async function doCreateUser() {
+  const name  = document.getElementById('newUserName')?.value?.trim();
+  const email = document.getElementById('newUserEmail')?.value?.trim();
+  const pwd   = document.getElementById('newUserPwd')?.value;
+  const role  = document.getElementById('newUserRole')?.value;
+  if(!name||!email||!pwd) { showToast('Lengkapi semua field','error'); return; }
+  const { data, error } = await sb.auth.admin.createUser({ email, password: pwd, user_metadata: { full_name: name, role } });
+  if(error) { showToast('Gagal: '+error.message,'error'); return; }
+  showToast('User berhasil dibuat ✓','success');
+  closeModal();
+  loadUsers();
+}
+
+/* ================================================================
+   4. FINANCE TAB — wallet_transactions realtime
+   ================================================================ */
+async function loadFinance() {
+  const tbody = document.getElementById('financeTableBody');
+  if(!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--dim);">⏳ Memuat…</td></tr>`;
+
+  const { data, error } = await sb
+    .from('wallet_transactions')
+    .select('id,type,amount,balance_after,description,created_at,wallets(user_id,profiles:user_id(username,full_name))')
+    .order('created_at', {ascending:false})
+    .limit(50);
+
+  if(error) { tbody.innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--red);">${error.message}</td></tr>`; return; }
+
+  const typeLabel = { topup:'Deposit', escrow_hold:'Ditahan Rekber', escrow_release:'Cair ke Penjual', refund:'Refund', withdrawal:'Penarikan' };
+  const typeCls   = { topup:'b-green', escrow_hold:'b-gold', escrow_release:'b-green', refund:'b-blue', withdrawal:'b-purple' };
+
+  tbody.innerHTML = data.map(tx => {
+    const profile = tx.wallets?.profiles;
+    const user = profile?.username ? '@'+profile.username : (profile?.full_name||'-');
+    const isIn = ['topup','escrow_release','refund'].includes(tx.type);
+    return `
+    <tr>
+      <td style="color:var(--dim);font-size:11px;font-family:monospace;">${tx.id.slice(0,8)}</td>
+      <td>${user}</td>
+      <td><span class="badge ${typeCls[tx.type]||'b-gray'}">${typeLabel[tx.type]||tx.type}</span></td>
+      <td style="color:${isIn?'var(--green)':'var(--red)'};font-weight:700;">${isIn?'+':'-'}${fmtRp(tx.amount)}</td>
+      <td style="font-size:12px;color:var(--muted);">${tx.description||'-'}</td>
+      <td><span class="badge b-green b-dot">Sukses</span></td>
+      <td style="color:var(--dim);font-size:11px;">${timeAgo(tx.created_at)}</td>
+    </tr>`;
+  }).join('');
+
+  // Stat finance dari admin_stats
+  const { data: stats } = await sb.from('admin_stats').select('gmv_completed,platform_revenue,total_escrow_held,total_wallet_balance').single();
+  if(stats) {
+    setText('fin-stat-gmv',      fmtRp(stats.gmv_completed));
+    setText('fin-stat-revenue',  fmtRp(stats.platform_revenue));
+    setText('fin-stat-escrow',   fmtRp(stats.total_escrow_held));
+    setText('fin-stat-wallets',  fmtRp(stats.total_wallet_balance));
+  }
+}
+
+async function doDepositManual() {
+  const userSearch = document.getElementById('depositUserSearch')?.value?.trim();
+  const amount     = parseInt(document.getElementById('depositAmount')?.value);
+  const reason     = document.getElementById('depositReason')?.value?.trim();
+  if(!userSearch||!amount||!reason) { showToast('Lengkapi semua field','error'); return; }
+
+  // Cari user by username
+  const { data: profile } = await sb.from('profiles').select('id,full_name,username').eq('username',userSearch).single();
+  if(!profile) { showToast('User tidak ditemukan: '+userSearch,'error'); return; }
+
+  const { data, error } = await sb.rpc('admin_adjust_wallet', { p_user_id: profile.id, p_amount: amount, p_reason: reason });
+  if(error || !data?.ok) { showToast('Gagal: '+(data?.error||error?.message),'error'); return; }
+  showToast(`Deposit Rp ${amount.toLocaleString('id-ID')} → ${profile.full_name||profile.username} ✓`,'success');
+  loadFinance();
+}
+
+/* ================================================================
+   5. ADMIN LOGS — tab keamanan
+   ================================================================ */
+async function loadAdminLogs() {
+  const el = document.getElementById('adminLogsBody');
+  if(!el) return;
+  el.innerHTML = '<div class="log-item"><div class="log-meta">⏳ Memuat log…</div></div>';
+
+  const { data, error } = await sb
+    .from('admin_logs')
+    .select('id,action,target_type,detail,created_at,profiles:admin_id(full_name,username)')
+    .order('created_at', {ascending:false})
+    .limit(30);
+
+  if(error) { el.innerHTML=`<div class="log-item"><div class="log-meta" style="color:var(--red);">${error.message}</div></div>`; return; }
+  if(!data.length) { el.innerHTML='<div class="empty"><p>Belum ada log admin</p></div>'; return; }
+
+  const icons = { suspend_user:'🚫',unsuspend_user:'✅',change_role:'🔄',update_order_status:'📦',force_refund:'💸',adjust_wallet:'💰',activate_product:'🛍️',deactivate_product:'🚫' };
+  el.innerHTML = data.map(log => {
+    const admin = log.profiles?.username ? '@'+log.profiles.username : log.profiles?.full_name||'Admin';
+    return `
+    <div class="log-item">
+      <div class="log-icon">${icons[log.action]||'⚙️'}</div>
+      <div style="flex:1;">
+        <div class="log-action">${log.action.replace(/_/g,' ')} · ${admin}</div>
+        <div class="log-meta">${log.target_type} ${log.target_id?.slice(0,8)||''} · ${timeAgo(log.created_at)}</div>
+        ${log.detail?`<div style="font-size:11px;color:var(--dim);margin-top:2px;">${JSON.stringify(log.detail).slice(0,100)}</div>`:''}
+      </div>
+      <span class="badge b-purple">${log.target_type}</span>
+    </div>`;
+  }).join('');
+}
+
+async function doCreateProduct() {
+  const title = document.getElementById('svcTitle')?.value?.trim();
+  const cat   = document.getElementById('svcCat')?.value;
+  const price = parseInt(document.getElementById('svcPrice')?.value);
+  const stock = parseInt(document.getElementById('svcStock')?.value)||99;
+  if(!title||!price) { showToast('Isi nama dan harga','error'); return; }
+
+  // Butuh seller_id → pakai session saat ini
+  const { data:{ user } } = await sb.auth.getUser();
+  if(!user) { showToast('Harus login','error'); return; }
+
+  const { error } = await sb.from('products').insert({
+    seller_id: user.id, title, category: cat, price, stock, is_active: true
+  });
+  if(error) { showToast('Gagal: '+error.message,'error'); return; }
+  showToast('Produk ditambah ✓','success');
+  closeModal();
+}
+
+async function doToggleProduct(productId, active) {
+  const { data, error } = await sb.rpc('admin_toggle_product', { p_product_id: productId, p_active: active });
+  if(error || !data?.ok) { showToast('Gagal: '+(data?.error||error?.message),'error'); return; }
+  showToast(active ? 'Produk diaktifkan ✓' : 'Produk dinonaktifkan ✓','success');
+}
+
+
+/* ================================================================
+   KOMISI ADMIN — load data komisi dari Supabase
+   ================================================================ */
+async function loadCommission() {
+  // Ringkasan komisi
+  const { data: summary } = await sb.rpc('admin_get_commission_summary');
+  if(summary) {
+    setText('comm-balance', fmtRp(summary.admin_balance));
+    setText('comm-today',   fmtRp(summary.today_commission));
+    setText('comm-month',   fmtRp(summary.month_commission));
+    setText('comm-total',   fmtRp(summary.total_commission));
+  }
+
+  // Rate komisi saat ini
+  const { data: setting } = await sb.from('app_settings').select('value').eq('key','commission_rate').single();
+  if(setting) {
+    const input = document.getElementById('commissionRateInput');
+    if(input) input.value = parseFloat(setting.value) * 100;
+  }
+
+  // Detail komisi per transaksi
+  const tbody = document.getElementById('commissionTableBody');
+  if(!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--dim);">⏳ Memuat…</td></tr>';
+
+  const { data, error } = await sb
+    .from('admin_orders_view')
+    .select('id,product_title,buyer_name,buyer_username,seller_name,seller_username,total_amount,platform_fee,seller_payout,created_at,status')
+    .eq('status','completed')
+    .order('created_at',{ascending:false})
+    .limit(30);
+
+  if(error) { tbody.innerHTML=`<tr><td colspan="7" style="color:var(--red);text-align:center;padding:16px;">${error.message}</td></tr>`; return; }
+  if(!data || !data.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--dim);">Belum ada komisi tersettled</td></tr>'; return; }
+
+  tbody.innerHTML = data.map(o => `
+    <tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:8px;color:var(--dim);font-family:monospace;font-size:11px;">${o.id.slice(0,8)}</td>
+      <td style="padding:8px;">${o.buyer_username ? '@'+o.buyer_username : (o.buyer_name||'-')}</td>
+      <td style="padding:8px;">${o.seller_username ? '@'+o.seller_username : (o.seller_name||'-')}</td>
+      <td style="padding:8px;text-align:right;color:var(--text);">${fmtRp(o.total_amount)}</td>
+      <td style="padding:8px;text-align:right;color:var(--gold);font-weight:700;">${fmtRp(o.platform_fee)}</td>
+      <td style="padding:8px;text-align:right;color:var(--green);">${fmtRp(o.seller_payout)}</td>
+      <td style="padding:8px;color:var(--dim);font-size:11px;">${timeAgo(o.created_at)}</td>
+    </tr>
+  `).join('');
+}
+
+async function saveCommissionRate() {
+  const input = document.getElementById('commissionRateInput');
+  if(!input) return;
+  const pct = parseFloat(input.value);
+  if(isNaN(pct) || pct < 0 || pct > 100) { showToast('Rate tidak valid (0-100%)','error'); return; }
+  const rate = pct / 100; // simpan desimal: 1% -> 0.01
+
+  // Cek apakah row sudah ada
+  const { data: existing } = await sb
+    .from('app_settings')
+    .select('key')
+    .eq('key','commission_rate')
+    .maybeSingle();
+
+  let error;
+  if(existing) {
+    ({ error } = await sb
+      .from('app_settings')
+      .update({ value: String(rate) })
+      .eq('key','commission_rate'));
+  } else {
+    ({ error } = await sb
+      .from('app_settings')
+      .insert({ key:'commission_rate', value: String(rate) }));
+  }
+
+  if(error) {
+    showToast('Gagal simpan rate: '+error.message,'error');
+    console.error('saveCommissionRate error:', error);
+    return;
+  }
+
+  showToast('Rate komisi disimpan: '+pct.toFixed(1)+'% sudah aktif','success');
+  loadCommission(); // reload panel komisi supaya angka langsung update
+}
+
+
+/* ================================================================
+   LOGOUT
+   ================================================================ */
+async function doLogout() {
+  if(!confirm('Yakin ingin keluar dari panel admin?')) return;
+  await sb.auth.signOut();
+  window.location.href = 'login.html';
+}
+
+/* ================================================================
+   EXPORT CSV ORDERS
+   ================================================================ */
+async function exportOrdersCSV() {
+  showToast('Mengambil data orders…','info');
+  const { data, error } = await sb
+    .from('admin_orders_view')
+    .select('id,product_title,buyer_name,buyer_username,seller_name,total_amount,platform_fee,seller_payout,status,created_at')
+    .order('created_at',{ascending:false})
+    .limit(1000);
+  if(error) { showToast('Gagal export: '+error.message,'error'); return; }
+
+  const headers = ['ID','Produk','Pembeli','Penjual','Total','Komisi','Net Penjual','Status','Waktu'];
+  const rows = data.map(o => [
+    o.id, o.product_title||'', o.buyer_username||o.buyer_name||'',
+    o.seller_name||'', o.total_amount, o.platform_fee||0, o.seller_payout||0,
+    o.status, new Date(o.created_at).toLocaleString('id-ID')
+  ]);
+
+  const csv = [headers, ...rows].map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'orders_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('Export CSV berhasil ✓','success');
+}
+
+/* ================================================================
+   BULK CANCEL & BULK RESEND
+   ================================================================ */
+async function doBulkCancel() {
+  const checked = [...document.querySelectorAll('#ordersTable tbody input[type=checkbox]:checked')];
+  if(!checked.length) { showToast('Pilih order dulu dengan centang','error'); return; }
+  if(!confirm(`Cancel ${checked.length} order yang dipilih?`)) return;
+
+  const ids = checked.map(cb => cb.closest('tr').querySelector('td:nth-child(2)')?.textContent?.trim()).filter(Boolean);
+  let ok = 0;
+  for(const shortId of ids) {
+    const { data: orders } = await sb.from('orders').select('id').ilike('id', shortId+'%').limit(1);
+    if(orders?.[0]) {
+      await sb.from('orders').update({status:'cancelled'}).eq('id', orders[0].id);
+      ok++;
+    }
+  }
+  showToast(`${ok} order berhasil dicancel ✓`,'success');
+  loadOrders();
+}
+
+async function doBulkResend() {
+  const checked = [...document.querySelectorAll('#ordersTable tbody input[type=checkbox]:checked')];
+  if(!checked.length) { showToast('Pilih order dulu dengan centang','error'); return; }
+  showToast(`${checked.length} order ditandai untuk resend — hubungkan ke API provider ✓`,'info');
+}
+
+/* ================================================================
+   LOAD SERVICES (produk dari Supabase)
+   ================================================================ */
+async function loadServices() {
+  const tbody = document.querySelector('#servicesTable tbody');
+  if(!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--dim);">⏳ Memuat layanan…</td></tr>';
+
+  const { data, error } = await sb
+    .from('products')
+    .select('id,title,category,price,stock,is_active,created_at,profiles:seller_id(username,full_name)')
+    .order('created_at',{ascending:false})
+    .limit(50);
+
+  if(error) { tbody.innerHTML=`<tr><td colspan="6" style="color:var(--red);text-align:center;padding:16px;">${error.message}</td></tr>`; return; }
+  if(!data?.length) { tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--dim);">Belum ada layanan</td></tr>'; return; }
+
+  tbody.innerHTML = data.map(p=>`
+    <tr>
+      <td style="font-size:11px;color:var(--dim);font-family:monospace;">${p.id.slice(0,8)}</td>
+      <td style="font-weight:600;">${p.title||'-'}</td>
+      <td>${p.category||'-'}</td>
+      <td style="color:var(--green);font-weight:700;">Rp ${Number(p.price||0).toLocaleString('id-ID')}</td>
+      <td>${p.stock??'∞'}</td>
+      <td><span class="badge ${p.is_active?'b-green':'b-gray'} b-dot">${p.is_active?'Aktif':'Nonaktif'}</span></td>
+      <td>
+        <button class="btn btn-ghost btn-xs" onclick="doToggleProduct('${p.id}',${!p.is_active})">${p.is_active?'Nonaktifkan':'Aktifkan'}</button>
+      </td>
+    </tr>`).join('');
+}
+
+/* ================================================================
+   LOAD REPORTS (data real dari Supabase)
+   ================================================================ */
+async function loadReports() {
+  // Top produk terlaris
+  const { data: topProducts } = await sb
+    .from('orders')
+    .select('product_id,total_amount,products:product_id(title)')
+    .eq('status','completed');
+
+  if(topProducts?.length) {
+    const grouped = {};
+    topProducts.forEach(o => {
+      const title = o.products?.title||'Unknown';
+      grouped[title] = (grouped[title]||0) + (o.total_amount||0);
+    });
+    const sorted = Object.entries(grouped).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const max = sorted[0]?.[1]||1;
+    const el = document.getElementById('topProductsList');
+    if(el) el.innerHTML = sorted.map(([title,amt])=>`
+      <div><div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px;">
+        <span>${title}</span><span style="color:var(--green);font-weight:600;">${fmtRp(amt)}</span>
+      </div><div class="prog-bar"><div class="prog-fill" style="width:${Math.round(amt/max*100)}%;background:var(--purple);"></div></div></div>
+    `).join('');
+  }
+
+  // Top buyers
+  const { data: topBuyers } = await sb
+    .from('orders')
+    .select('buyer_id,total_amount,profiles:buyer_id(username,full_name)')
+    .eq('status','completed');
+
+  if(topBuyers?.length) {
+    const grouped = {};
+    const names = {};
+    topBuyers.forEach(o => {
+      const uid = o.buyer_id;
+      grouped[uid] = (grouped[uid]||0) + (o.total_amount||0);
+      names[uid] = o.profiles?.username||o.profiles?.full_name||uid?.slice(0,8);
+    });
+    const sorted = Object.entries(grouped).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const el = document.getElementById('topBuyersList');
+    if(el) el.innerHTML = sorted.map(([uid,amt],i)=>`
+      <tr>
+        <td style="color:var(--gold);font-weight:700;">${i+1}</td>
+        <td>${names[uid]}</td>
+        <td style="color:var(--green);font-weight:600;">${fmtRp(amt)}</td>
+      </tr>`).join('');
+  }
+
+  // Stats real
+  const { data: stats } = await sb.from('admin_stats').select('gmv_completed,platform_revenue,total_orders,completed_orders').single();
+  if(stats) {
+    setText('rep-gmv',    fmtRp(stats.gmv_completed));
+    setText('rep-profit', fmtRp(stats.platform_revenue));
+    setText('rep-orders', Number(stats.total_orders||0).toLocaleString('id-ID'));
+  }
+}
+
+/* ================================================================
+   SAVE SETTINGS ke app_settings Supabase
+   ================================================================ */
+async function saveSettings() {
+  const siteName  = document.getElementById('set-site-name')?.value?.trim();
+  const tagline   = document.getElementById('set-tagline')?.value?.trim();
+  const metaTitle = document.getElementById('set-meta-title')?.value?.trim();
+
+  const updates = [];
+  if(siteName)  updates.push({key:'site_name',  value:siteName});
+  if(tagline)   updates.push({key:'tagline',     value:tagline});
+  if(metaTitle) updates.push({key:'meta_title',  value:metaTitle});
+
+  for(const row of updates) {
+    await sb.from('app_settings').upsert(row, {onConflict:'key'});
+  }
+  showToast('Pengaturan berhasil disimpan ✓','success');
+}
+
+/* ================================================================
+   REALTIME SUBSCRIPTIONS — update otomatis tanpa refresh
+   ================================================================ */
+function setupRealtime() {
+  // Subscribe ke perubahan orders → update dashboard
+  sb.channel('admin-orders')
+    .on('postgres_changes', { event:'*', schema:'public', table:'orders' }, payload => {
+      showToast('📦 Order diperbarui · '+payload.eventType,'info');
+      loadDashboard();
+      // Kalau tab orders aktif, reload juga
+      if(document.getElementById('tab-orders')?.classList.contains('active')) loadOrders();
+    })
+    .subscribe();
+
+  // Subscribe ke wallet_transactions → update finance + badge di orders
+  sb.channel('admin-wallets')
+    .on('postgres_changes', { event:'INSERT', schema:'public', table:'wallet_transactions' }, payload => {
+      const t = payload.new;
+      const isRefund = t.type === 'refund';
+      if (isRefund) {
+        showToast('💸 Refund berhasil dikredit ke wallet pembeli','success');
+      } else {
+        showToast('💰 Transaksi wallet baru: ' + (t.description || t.type),'info');
+      }
+      if(document.getElementById('tab-finance')?.classList.contains('active')) loadFinance();
+      // Reload orders supaya badge status "Direfund" langsung muncul
+      if(document.getElementById('tab-orders')?.classList.contains('active')) loadOrders();
+    })
+    .subscribe();
+
+  // Subscribe ke profiles → update users tab
+  sb.channel('admin-profiles')
+    .on('postgres_changes', { event:'*', schema:'public', table:'profiles' }, () => {
+      if(document.getElementById('tab-users')?.classList.contains('active')) loadUsers();
+    })
+    .subscribe();
+
+  // Subscribe ke admin_logs → update security tab
+  sb.channel('admin-logs')
+    .on('postgres_changes', { event:'INSERT', schema:'public', table:'admin_logs' }, () => {
+      if(document.getElementById('tab-security')?.classList.contains('active')) loadAdminLogs();
+    })
+    .subscribe();
+}
+
+/* ── REFRESH BUTTON ── */
+function refreshDashboard() {
+  loadDashboard();
+  showToast('Data diperbarui ✓','success');
+}
+
+/* ================================================================
+   INIT
+   ================================================================ */
+document.addEventListener('DOMContentLoaded', async () => {
+  // Cek koneksi Supabase
+  if(SUPABASE_URL.includes('YOUR_PROJECT')) {
+    showToast('⚠️ Konfigurasi Supabase belum diisi! Edit SUPABASE_URL & SUPABASE_ANON di script.','error');
+    setTimeout(()=>showToast('Buka file ini, cari "YOUR_PROJECT" dan ganti dengan URL + ANON KEY Supabase kamu','info'),1500);
+    return;
+  }
+
+  // Muat data dashboard awal
+  await loadDashboard();
+
+  // Setup realtime subscriptions
+  setupRealtime();
+
+  // Auto-refresh setiap 30 detik sebagai fallback
+  setInterval(loadDashboard, 30_000);
+
+  showToast('Panel admin dimuat · Realtime aktif ✓','success');
+});
+</script>
+
+<div class="mob-overlay" id="mobOverlay" onclick="closeMobileMenu()"></div>
+<script>
+function toggleMobileMenu() {
+  const sb = document.getElementById('sidebarNav');
+  const ov = document.getElementById('mobOverlay');
+  sb.classList.toggle('mob-open');
+  ov.classList.toggle('open');
+}
+function closeMobileMenu() {
+  document.getElementById('sidebarNav').classList.remove('mob-open');
+  document.getElementById('mobOverlay').classList.remove('open');
+}
+// Close sidebar on nav click (mobile)
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.sidebar a').forEach(a => {
+    a.addEventListener('click', () => {
+      if(window.innerWidth <= 768) closeMobileMenu();
+    });
+  });
+});
+</script>
+</body>
+</html>

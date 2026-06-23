@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Forum — Rekberin</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* ── DARK THEME OVERRIDE untuk forum ── */
+body { background:#0f1117; }
+
+/* ── Layout ── */
+.forum-page { display:flex; flex-direction:column; min-height:calc(100vh - 64px); }
+.forum-wrap {
+  display:grid; grid-template-columns:260px 1fr;
+  gap:0; flex:1;
+  max-width:1200px; margin:20px auto;
+  width:100%; padding:0 16px;
+  height:calc(100vh - 104px);
+}
+
+/* ── Sidebar ── */
+.forum-sidebar {
+  background:#181c27;
+  border:1px solid #2a2f3e;
+  border-radius:12px 0 0 12px;
+  display:flex; flex-direction:column;
+  overflow:hidden;
+}
+.forum-sidebar-header {
+  background:#1e2235;
+  padding:14px 16px;
+  font-size:13px; font-weight:700;
+  color:#e2e8f0;
+  display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid #2a2f3e;
+}
+.online-pill {
+  font-size:11px; padding:2px 8px;
+  border-radius:20px; font-weight:600;
+  background:#16A37A22; color:#16A37A;
+  border:1px solid #16A37A44;
+}
+.room-list { flex:1; overflow-y:auto; }
+.room-list::-webkit-scrollbar { width:4px; }
+.room-list::-webkit-scrollbar-track { background:transparent; }
+.room-list::-webkit-scrollbar-thumb { background:#2a2f3e; border-radius:4px; }
+.room-item {
+  padding:11px 14px; cursor:pointer;
+  border-bottom:1px solid #1e2235;
+  display:flex; align-items:center; gap:10px;
+  transition:background .15s;
+  border-left:3px solid transparent;
+}
+.room-item:hover { background:#1e2235; }
+.room-item.active { background:#1e2235; border-left-color:#f5a623; }
+.room-icon {
+  width:36px; height:36px; border-radius:9px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:17px; flex-shrink:0;
+}
+.room-info { flex:1; min-width:0; }
+.room-name { font-size:13px; font-weight:600; color:#e2e8f0; }
+.room-desc { font-size:11px; color:#64748b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.room-badge {
+  background:#f5a623; color:#1a2035;
+  font-size:10px; font-weight:700;
+  border-radius:10px; padding:2px 7px; flex-shrink:0;
+}
+
+/* ── Area chat ── */
+.forum-chat {
+  background:#181c27;
+  border:1px solid #2a2f3e; border-left:none;
+  border-radius:0 12px 12px 0;
+  display:flex; flex-direction:column; overflow:hidden;
+}
+.chat-header-bar {
+  padding:11px 16px;
+  border-bottom:1px solid #2a2f3e;
+  display:flex; align-items:center; gap:10px;
+  background:#1e2235;
+}
+.chat-header-title { font-size:14px; font-weight:700; color:#e2e8f0; }
+.chat-header-sub { font-size:11px; color:#64748b; display:flex; align-items:center; gap:4px; }
+.chat-header-sub .dot { width:7px; height:7px; background:#16A37A; border-radius:50%; display:inline-block; }
+.hdr-btn {
+  background:none; border:1px solid #2a2f3e;
+  border-radius:8px; padding:5px 9px;
+  cursor:pointer; color:#64748b; font-size:13px;
+}
+.hdr-btn:hover { background:#2a2f3e; color:#e2e8f0; }
+
+/* ── Pesan ── */
+.chat-body {
+  flex:1; overflow-y:auto;
+  padding:14px 16px;
+  display:flex; flex-direction:column; gap:8px;
+  background:#0f1117;
+}
+.chat-body::-webkit-scrollbar { width:4px; }
+.chat-body::-webkit-scrollbar-thumb { background:#2a2f3e; border-radius:4px; }
+.chat-date-label {
+  text-align:center; font-size:11px; color:#475569;
+  background:#1a1f2e; border-radius:20px;
+  padding:3px 12px; align-self:center; border:1px solid #2a2f3e;
+}
+.chat-row { display:flex; gap:8px; max-width:80%; }
+.chat-row.mine { align-self:flex-end; flex-direction:row-reverse; }
+.chat-row.theirs { align-self:flex-start; }
+.chat-avatar-sm {
+  width:32px; height:32px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:700; flex-shrink:0; margin-top:2px;
+}
+.msg-wrap { display:flex; flex-direction:column; max-width:100%; }
+.msg-sender {
+  font-size:11px; color:#64748b; margin-bottom:3px;
+  display:flex; align-items:center; gap:5px;
+}
+.role-tag {
+  font-size:9px; padding:1px 5px; border-radius:4px; font-weight:700;
+}
+.role-tag.penjual { background:#1e3a5f; color:#60a5fa; }
+.role-tag.pembeli { background:#14532d; color:#4ade80; }
+.chat-bubble {
+  padding:9px 13px; border-radius:14px;
+  font-size:13px; line-height:1.6; word-break:break-word;
+  white-space:pre-wrap;
+}
+.chat-row.mine .chat-bubble {
+  background:#1e3a5f; color:#e2e8f0;
+  border-radius:14px 4px 14px 14px;
+}
+.chat-row.theirs .chat-bubble {
+  background:#1e2235; color:#e2e8f0;
+  border:1px solid #2a2f3e;
+  border-radius:4px 14px 14px 14px;
+}
+.mention { color:#f5a623; font-weight:600; }
+.chat-img { max-width:240px; max-height:200px; border-radius:10px; margin-top:6px; display:block; cursor:pointer; }
+.chat-time { font-size:10px; color:#475569; margin-top:3px; }
+.chat-row.mine .chat-time { text-align:right; }
+.chat-loading, .chat-empty { text-align:center; color:#475569; font-size:13px; padding:40px 0; }
+
+/* ── Suggest @username ── */
+.mention-suggest {
+  position:absolute; bottom:100%; left:0; right:0;
+  background:#1e2235; border:1px solid #2a2f3e;
+  border-radius:10px 10px 0 0; overflow:hidden;
+  max-height:160px; overflow-y:auto; z-index:10;
+  display:none;
+}
+.mention-suggest.open { display:block; }
+.mention-opt {
+  padding:8px 14px; cursor:pointer; font-size:13px; color:#e2e8f0;
+  display:flex; align-items:center; gap:8px;
+}
+.mention-opt:hover, .mention-opt.sel { background:#2a2f3e; }
+.mention-opt .mo-avatar {
+  width:24px; height:24px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; font-weight:700; flex-shrink:0;
+}
+.mention-opt .mo-role { font-size:10px; color:#64748b; }
+
+/* ── Composer ── */
+.composer-wrap { position:relative; border-top:1px solid #2a2f3e; }
+.img-preview-bar {
+  display:none; gap:8px; padding:8px 14px 0;
+  background:#181c27; flex-wrap:wrap;
+}
+.img-preview-bar.show { display:flex; }
+.img-thumb {
+  position:relative; width:60px; height:60px;
+  border-radius:8px; overflow:hidden; flex-shrink:0;
+  border:1px solid #2a2f3e;
+}
+.img-thumb img { width:100%; height:100%; object-fit:cover; }
+.img-thumb-del {
+  position:absolute; top:2px; right:2px;
+  background:rgba(0,0,0,.7); color:#fff; border:none;
+  border-radius:50%; width:18px; height:18px;
+  font-size:11px; cursor:pointer; display:flex;
+  align-items:center; justify-content:center; line-height:1;
+}
+.chat-composer {
+  padding:10px 14px;
+  display:flex; align-items:flex-end; gap:8px;
+  background:#181c27;
+}
+.composer-tools { display:flex; gap:6px; }
+.tool-btn {
+  background:none; border:1px solid #2a2f3e;
+  border-radius:8px; padding:7px 9px;
+  cursor:pointer; color:#64748b; font-size:16px;
+  transition:all .15s; flex-shrink:0;
+}
+.tool-btn:hover { background:#2a2f3e; color:#e2e8f0; }
+.composer-input {
+  flex:1; border:1px solid #2a2f3e;
+  border-radius:10px; padding:9px 13px;
+  font-size:13px; resize:none; outline:none;
+  font-family:inherit; line-height:1.5;
+  background:#0f1117; color:#e2e8f0;
+  max-height:120px; transition:border .15s;
+}
+.composer-input::placeholder { color:#475569; }
+.composer-input:focus { border-color:#f5a623; }
+.composer-send {
+  background:#f5a623; color:#1a2035;
+  border:none; border-radius:10px;
+  padding:9px 16px; font-size:13px; font-weight:700;
+  cursor:pointer; flex-shrink:0;
+}
+.composer-send:hover { background:#e09800; }
+.composer-send:disabled { opacity:.4; cursor:not-allowed; }
+.login-notice {
+  padding:12px 16px; background:#1a1f2e;
+  border-top:1px solid #2a2f3e;
+  text-align:center; font-size:13px; color:#64748b;
+}
+.login-notice a { color:#f5a623; font-weight:600; }
+
+/* ── Lightbox ── */
+.lightbox {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.85); z-index:9999;
+  align-items:center; justify-content:center;
+}
+.lightbox.open { display:flex; }
+.lightbox img { max-width:90vw; max-height:88vh; border-radius:10px; }
+.lightbox-close {
+  position:fixed; top:16px; right:20px;
+  background:none; border:none; color:#fff;
+  font-size:28px; cursor:pointer; z-index:10000;
+}
+
+/* ── Modal login ── */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:999; align-items:center; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal-box { background:#1e2235; border:1px solid #2a2f3e; border-radius:16px; padding:28px; max-width:360px; width:90%; text-align:center; }
+.modal-box h3 { font-size:17px; margin-bottom:8px; color:#e2e8f0; }
+.modal-box p { font-size:13px; color:#64748b; margin-bottom:20px; }
+.modal-box .btn-group { display:flex; gap:10px; justify-content:center; }
+.btn-gold-sm { background:#f5a623; color:#1a2035; padding:9px 20px; border-radius:8px; font-weight:700; font-size:13px; text-decoration:none; }
+.btn-ghost-sm { background:none; border:1px solid #2a2f3e; color:#94a3b8; padding:9px 20px; border-radius:8px; font-size:13px; text-decoration:none; }
+
+/* ── SQL notice ── */
+.sql-notice {
+  background:#1a1a00; border:1px solid #f5a62366;
+  border-radius:10px; padding:12px 16px;
+  margin:0 16px 16px; font-size:12px; color:#f5a623;
+  display:none;
+}
+.sql-notice.show { display:block; }
+
+/* ── Responsive ── */
+@media(max-width:700px){
+  .forum-wrap { grid-template-columns:1fr; padding:0; margin:0; height:auto; }
+  .forum-sidebar { border-radius:0; border:none; border-bottom:1px solid #2a2f3e; max-height:160px; }
+  .forum-chat { border-radius:0; border:none; height:calc(100vh - 240px); }
+  .chat-row { max-width:94%; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div class="header-top">
+    <a href="index.html" class="brand"><span class="brand-mark"></span>Rekberin<small>Verified marketplace</small></a>
+    <form class="header-search" id="headerSearch">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="Cari produk...">
+    </form>
+    <nav class="main-nav">
+      <a href="index.html">Beranda</a>
+      <a href="products.html">Produk</a>
+      <a href="forum.html" class="active">Forum</a>
+      <a href="#rekber">Rekber</a>
+    </nav>
+    <div class="header-actions" id="headerActions">
+      <a href="login.html" class="btn btn-ghost-light btn-sm">Masuk</a>
+      <a href="register.html" class="btn btn-gold btn-sm">Daftar</a>
+      <button class="menu-toggle" id="menuToggle" aria-label="Buka menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-drawer" id="mobileDrawer">
+  <div class="backdrop" onclick="closeDrawer()"></div>
+  <div class="panel">
+    <button class="close-drawer" onclick="closeDrawer()">✕</button>
+    <a href="index.html">Beranda</a>
+    <a href="products.html">Produk</a>
+    <a href="forum.html">Forum</a>
+    <a href="#rekber">Rekber</a>
+  </div>
+</div>
+
+<!-- FORUM -->
+<div class="forum-page">
+  <div class="forum-wrap">
+
+    <!-- Sidebar -->
+    <aside class="forum-sidebar">
+      <div class="forum-sidebar-header">
+        <span>💬 Ruang Chat</span>
+        <span class="online-pill" id="onlineCount">● 0 online</span>
+      </div>
+      <div class="room-list" id="roomList"></div>
+    </aside>
+
+    <!-- Chat area -->
+    <div class="forum-chat">
+      <div class="chat-header-bar">
+        <div class="room-icon" id="chatRoomIcon" style="background:#1e2235;font-size:20px">💬</div>
+        <div style="flex:1">
+          <div class="chat-header-title" id="chatRoomTitle">Pilih ruangan</div>
+          <div class="chat-header-sub">
+            <span class="dot" id="connDot" style="background:#475569"></span>
+            <span id="chatRoomSub">Pilih ruangan di kiri</span>
+          </div>
+        </div>
+        <button class="hdr-btn" title="Info" onclick="showToast('Info ruangan')">ℹ️</button>
+      </div>
+
+      <!-- SQL error notice -->
+      <div class="sql-notice" id="sqlNotice">
+        ⚠️ Tabel <b>forum_messages</b> belum dibuat. Jalankan <b>schema_forum.sql</b> di Supabase Dashboard → SQL Editor, lalu refresh halaman ini.
+      </div>
+
+      <div class="chat-body" id="chatBody">
+        <div class="chat-empty">Pilih ruangan untuk melihat percakapan 👈</div>
+      </div>
+
+      <!-- Composer (login) -->
+      <div class="composer-wrap" id="composerWrap" style="display:none">
+        <!-- Preview gambar -->
+        <div class="img-preview-bar" id="imgPreviewBar"></div>
+        <!-- Mention suggest -->
+        <div class="mention-suggest" id="mentionSuggest"></div>
+        <form class="chat-composer" id="chatComposer">
+          <div class="composer-tools">
+            <!-- Upload gambar -->
+            <button type="button" class="tool-btn" title="Kirim gambar" onclick="document.getElementById('imgPicker').click()">🖼️</button>
+            <input type="file" id="imgPicker" accept="image/*" multiple style="display:none">
+          </div>
+          <textarea class="composer-input" id="msgInput" rows="1"
+            placeholder="Tulis pesan… ketik @ untuk tag pengguna" maxlength="2000"></textarea>
+          <button type="submit" class="composer-send" id="sendBtn">Kirim ↑</button>
+        </form>
+      </div>
+
+      <!-- Notif guest -->
+      <div class="login-notice" id="loginNotice" style="display:none">
+        <a href="login.html">Masuk</a> atau <a href="register.html">Daftar</a> untuk ikut berdiskusi.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightboxImg" src="" alt="Preview">
+</div>
+
+<!-- Modal login -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal-box">
+    <div style="font-size:36px;margin-bottom:8px">💬</div>
+    <h3>Masuk untuk ikut chat</h3>
+    <p>Bergabunglah dalam diskusi forum bersama seller dan buyer.</p>
+    <div class="btn-group">
+      <a href="login.html" class="btn-gold-sm">Masuk</a>
+      <a href="register.html" class="btn-ghost-sm">Daftar</a>
+    </div>
+    <button onclick="document.getElementById('loginModal').classList.remove('open')"
+      style="margin-top:14px;background:none;border:none;color:#475569;cursor:pointer;font-size:13px">Tutup</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="chat.js"></script>
+<script src="nav-auth.js"></script>
+<script>
+/* =========================================================
+   FORUM — Live Chat Publik · Dark Mode · Gambar · @Mention
+   ========================================================= */
+
+const ROOMS = [
+  { id:"umum",   icon:"🌐", bg:"#1e3a5f", name:"Diskusi Umum",      desc:"Topik bebas untuk semua" },
+  { id:"produk", icon:"📦", bg:"#1e2a1e", name:"Tanya Produk",       desc:"Tanya seller soal produk" },
+  { id:"rekber", icon:"🔒", bg:"#1a2e1a", name:"Cara Kerja Rekber",  desc:"Panduan & tanya jawab rekber" },
+  { id:"buyer",  icon:"🛒", bg:"#2a1e10", name:"Komunitas Buyer",    desc:"Pengalaman & rekomendasi" },
+  { id:"seller", icon:"🏪", bg:"#1e1a2e", name:"Komunitas Seller",   desc:"Tips jualan & diskusi seller" },
+];
+
+let currentRoom   = null;
+let forumChannel  = null;
+let currentUser   = null;  // { id, full_name, role }
+let pendingImages = [];    // File[] sebelum dikirim
+let recentUsers   = [];    // [{id, full_name, role}] untuk @mention
+
+/* ── Init ── */
+async function initForum(){
+  const { data:{ session } } = await supabaseClient.auth.getSession();
+  if(session?.user){
+    const { data: profile } = await supabaseClient
+      .from("profiles").select("id,full_name,role").eq("id",session.user.id).single();
+    currentUser = {
+      id: session.user.id,
+      full_name: profile?.full_name || session.user.email.split("@")[0],
+      role: profile?.role || "pembeli",
+    };
+    document.getElementById("composerWrap").style.display = "block";
+    document.getElementById("loginNotice").style.display  = "none";
+    loadRecentUsers();
+  } else {
+    document.getElementById("composerWrap").style.display = "none";
+    document.getElementById("loginNotice").style.display  = "block";
+  }
+  renderRoomList();
+  openRoom(ROOMS[0]);
+
+  // Pantau perubahan auth (misal: session restore setelah halaman load)
+  supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    if(event === "SIGNED_IN" && session?.user && !currentUser){
+      const { data: profile } = await supabaseClient
+        .from("profiles").select("id,full_name,role").eq("id",session.user.id).single();
+      currentUser = {
+        id: session.user.id,
+        full_name: profile?.full_name || session.user.email.split("@")[0],
+        role: profile?.role || "pembeli",
+      };
+      document.getElementById("composerWrap").style.display = "block";
+      document.getElementById("loginNotice").style.display  = "none";
+      loadRecentUsers();
+    } else if(event === "SIGNED_OUT"){
+      currentUser = null;
+      document.getElementById("composerWrap").style.display = "none";
+      document.getElementById("loginNotice").style.display  = "block";
+    }
+  });
+}
+
+/* ── Ambil user aktif di forum untuk @mention ── */
+async function loadRecentUsers(){
+  const { data } = await supabaseClient
+    .from("forum_messages").select("sender_id,sender_name,sender_role")
+    .order("created_at",{ascending:false}).limit(200);
+  if(!data) return;
+  const seen = new Set();
+  recentUsers = [];
+  data.forEach(m => {
+    if(!seen.has(m.sender_id) && m.sender_id !== currentUser?.id){
+      seen.add(m.sender_id);
+      recentUsers.push({ id:m.sender_id, full_name:m.sender_name, role:m.sender_role });
+    }
+  });
+}
+
+/* ── Render sidebar ── */
+function renderRoomList(){
+  document.getElementById("roomList").innerHTML = ROOMS.map(r=>`
+    <div class="room-item ${currentRoom?.id===r.id?'active':''}" id="room-${r.id}"
+         onclick='openRoom(${JSON.stringify(r).replace(/'/g,"&#39;")})'>
+      <div class="room-icon" style="background:${r.bg}">${r.icon}</div>
+      <div class="room-info">
+        <div class="room-name">${r.name}</div>
+        <div class="room-desc">${r.desc}</div>
+      </div>
+    </div>`).join("");
+}
+
+/* ── Buka ruangan ── */
+async function openRoom(room){
+  currentRoom = room;
+  document.querySelectorAll(".room-item").forEach(el=>el.classList.remove("active"));
+  document.getElementById("room-"+room.id)?.classList.add("active");
+  document.getElementById("chatRoomIcon").textContent = room.icon;
+  document.getElementById("chatRoomIcon").style.background = room.bg;
+  document.getElementById("chatRoomTitle").textContent = room.name;
+  document.getElementById("chatRoomSub").textContent = "Memuat…";
+  document.getElementById("connDot").style.background = "#475569";
+  if(document.getElementById("msgInput"))
+    document.getElementById("msgInput").placeholder = `Pesan di ${room.name}… ketik @ untuk tag pengguna`;
+  await loadForumMessages(room.id);
+  subscribeForumRoom(room.id);
+}
+
+/* ── Load pesan ── */
+async function loadForumMessages(roomId){
+  const body = document.getElementById("chatBody");
+  body.innerHTML = `<div class="chat-loading">Memuat pesan…</div>`;
+  const { data:msgs, error } = await supabaseClient
+    .from("forum_messages")
+    .select("id,body,image_url,created_at,sender_id,sender_name,sender_role")
+    .eq("room_id",roomId)
+    .order("created_at",{ascending:true})
+    .limit(150);
+
+  if(error){
+    body.innerHTML = `<div class="chat-empty">Gagal memuat: ${error.message}</div>`;
+    if(error.message.includes("schema cache")||error.message.includes("does not exist")){
+      document.getElementById("sqlNotice").classList.add("show");
+    }
+    return;
+  }
+  document.getElementById("sqlNotice").classList.remove("show");
+  body.innerHTML = "";
+  if(!msgs.length){ body.innerHTML=`<div class="chat-empty">Belum ada pesan. Jadilah yang pertama! 👋</div>`; return; }
+  let lastDate=null;
+  msgs.forEach(m=>{
+    const d=new Date(m.created_at).toDateString();
+    if(d!==lastDate){ appendDateLabel(body,m.created_at); lastDate=d; }
+    renderBubble(body,m);
+  });
+  body.scrollTop=body.scrollHeight;
+}
+
+/* ── Subscribe realtime ── */
+function subscribeForumRoom(roomId){
+  if(forumChannel) supabaseClient.removeChannel(forumChannel);
+  forumChannel = supabaseClient.channel("forum-"+roomId)
+    .on("postgres_changes",{event:"INSERT",schema:"public",table:"forum_messages",filter:`room_id=eq.${roomId}`},
+      payload=>{
+        const m=payload.new;
+        const body=document.getElementById("chatBody");
+        if(body.querySelector(`[data-msg-id="${m.id}"]`)) return;
+        body.querySelector(".chat-empty")?.remove();
+        renderBubble(body,m);
+        body.scrollTop=body.scrollHeight;
+      })
+    .subscribe(status=>{
+      const dot=document.getElementById("connDot");
+      const sub=document.getElementById("chatRoomSub");
+      if(status==="SUBSCRIBED"){ dot.style.background="#16A37A"; sub.textContent="Terhubung live"; }
+      else { dot.style.background="#f59e0b"; sub.textContent="Menghubungkan…"; }
+    });
+}
+
+/* ── Render bubble ── */
+function renderBubble(container, msg){
+  const isMine = currentUser && msg.sender_id===currentUser.id;
+  const role   = msg.sender_role||"pembeli";
+  const initial= (msg.sender_name||"?").charAt(0).toUpperCase();
+  const avBg   = isMine ? "#1e3a5f" : (role==="penjual"?"#1e3a5f":"#14532d");
+  const avFg   = isMine ? "#60a5fa" : (role==="penjual"?"#60a5fa":"#4ade80");
+
+  const row = document.createElement("div");
+  row.className = `chat-row ${isMine?"mine":"theirs"}`;
+  row.setAttribute("data-msg-id", msg.id);
+
+  // Buat struktur row dulu
+  row.innerHTML = `
+    <div class="chat-avatar-sm" style="background:${avBg};color:${avFg}">${initial}</div>
+    <div class="msg-wrap">
+      ${!isMine?`<div class="msg-sender">
+        <span class="sname"></span>
+        <span class="role-tag ${role}">${role==="penjual"?"Seller":"Buyer"}</span>
+      </div>`:""}
+    </div>`;
+
+  const msgWrap = row.querySelector(".msg-wrap");
+  if(!isMine) msgWrap.querySelector(".sname").textContent = msg.sender_name||"Pengguna";
+
+  // Baru buat bubble SETELAH row.innerHTML (urutan penting!)
+  const bubbleContent = document.createElement("div");
+  bubbleContent.className = "chat-bubble";
+
+  // Parse @mention → highlight teks
+  const parsed = parseMentions(msg.body||"");
+  bubbleContent.innerHTML = parsed;
+
+  // Tambah gambar ke bubble
+  if(msg.image_url){
+    const urls = msg.image_url.split(",").filter(Boolean);
+    urls.forEach(url=>{
+      const img = document.createElement("img");
+      img.className = "chat-img";
+      img.src = url.trim();
+      img.alt = "gambar";
+      img.onclick = ()=>openLightbox(url.trim());
+      bubbleContent.appendChild(img);
+    });
+  }
+
+  msgWrap.appendChild(bubbleContent);
+
+  const timeEl = document.createElement("div");
+  timeEl.className = "chat-time";
+  timeEl.textContent = chatTimeLabel(msg.created_at);
+  msgWrap.appendChild(timeEl);
+
+  container.appendChild(row);
+}
+
+/* ── Parse @mention ── */
+function parseMentions(text){
+  const escaped = text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  return escaped.replace(/@([\w\s]{1,30}?)(?=\s|$|[^\w])/g, (match, name)=>{
+    return `<span class="mention">@${name.trim()}</span>`;
+  });
+}
+
+/* ── @Mention autocomplete ── */
+let mentionStart = -1;
+const mentionBox = document.getElementById ? document.getElementById("mentionSuggest") : null;
+
+function setupMentionAutocomplete(){
+  const input = document.getElementById("msgInput");
+  if(!input) return;
+
+  input.addEventListener("input", ()=>{
+    const val = input.value;
+    const pos = input.selectionStart;
+    // Cari @ terakhir sebelum kursor
+    let atIdx = -1;
+    for(let i=pos-1;i>=0;i--){
+      if(val[i]==="@"){ atIdx=i; break; }
+      if(val[i]===" "||val[i]==="\n") break;
+    }
+    if(atIdx<0){ closeMentionSuggest(); return; }
+    const query = val.slice(atIdx+1, pos).toLowerCase();
+    mentionStart = atIdx;
+    const matches = recentUsers.filter(u=>u.full_name.toLowerCase().includes(query)).slice(0,6);
+    showMentionSuggest(matches);
+  });
+
+  input.addEventListener("keydown", e=>{
+    if(!mentionBox.classList.contains("open")) return;
+    const items = mentionBox.querySelectorAll(".mention-opt");
+    const sel   = mentionBox.querySelector(".sel");
+    const idx   = sel ? Array.from(items).indexOf(sel) : -1;
+    if(e.key==="ArrowDown"){ e.preventDefault(); items[Math.min(idx+1,items.length-1)]?.classList.add("sel"); sel?.classList.remove("sel"); }
+    else if(e.key==="ArrowUp"){ e.preventDefault(); items[Math.max(idx-1,0)]?.classList.add("sel"); sel?.classList.remove("sel"); }
+    else if(e.key==="Enter"&&sel){ e.preventDefault(); insertMention(sel.dataset.name); }
+    else if(e.key==="Escape") closeMentionSuggest();
+  });
+}
+
+function showMentionSuggest(users){
+  if(!mentionBox) return;
+  if(!users.length){ closeMentionSuggest(); return; }
+  mentionBox.innerHTML = users.map(u=>`
+    <div class="mention-opt" data-name="${u.full_name}" onclick="insertMention('${u.full_name.replace(/'/g,"\\'")}')">
+      <div class="mo-avatar" style="background:${u.role==='penjual'?'#1e3a5f':'#14532d'};color:${u.role==='penjual'?'#60a5fa':'#4ade80'}">
+        ${u.full_name.charAt(0).toUpperCase()}
+      </div>
+      <div>
+        <div>${u.full_name}</div>
+        <div class="mo-role">${u.role==="penjual"?"Seller":"Buyer"}</div>
+      </div>
+    </div>`).join("");
+  mentionBox.classList.add("open");
+}
+
+function closeMentionSuggest(){ mentionBox?.classList.remove("open"); mentionStart=-1; }
+
+function insertMention(name){
+  const input = document.getElementById("msgInput");
+  const val   = input.value;
+  const pos   = input.selectionStart;
+  input.value = val.slice(0, mentionStart) + "@" + name + " " + val.slice(pos);
+  input.focus();
+  closeMentionSuggest();
+}
+
+/* ── Upload gambar ke Supabase Storage ── */
+async function uploadImages(files){
+  const urls = [];
+  for(const file of files){
+    const ext  = file.name.split(".").pop();
+    const path = `forum/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+    const { data, error } = await supabaseClient.storage
+      .from("forum-images").upload(path, file, { cacheControl:"3600", upsert:false });
+    if(error){ console.error("Upload error:", error); showToast("Gagal upload: "+error.message+" (cek bucket forum-images di Supabase Storage)"); continue; }
+    const { data:pub } = supabaseClient.storage.from("forum-images").getPublicUrl(path);
+    urls.push(pub.publicUrl);
+  }
+  return urls;
+}
+
+/* ── Preview gambar sebelum kirim ── */
+function setupImagePicker(){
+  const picker = document.getElementById("imgPicker");
+  if(!picker) return;
+  picker.addEventListener("change", ()=>{
+    const files = Array.from(picker.files);
+    files.forEach(f=>{
+      if(pendingImages.length>=4){ showToast("Maksimal 4 gambar per pesan."); return; }
+      pendingImages.push(f);
+    });
+    picker.value="";
+    renderImgPreview();
+  });
+}
+
+function renderImgPreview(){
+  const bar = document.getElementById("imgPreviewBar");
+  if(!pendingImages.length){ bar.classList.remove("show"); bar.innerHTML=""; return; }
+  bar.classList.add("show");
+  bar.innerHTML = pendingImages.map((f,i)=>{
+    const url = URL.createObjectURL(f);
+    return `<div class="img-thumb">
+      <img src="${url}" alt="">
+      <button class="img-thumb-del" onclick="removePendingImg(${i})">✕</button>
+    </div>`;
+  }).join("");
+}
+
+function removePendingImg(i){ pendingImages.splice(i,1); renderImgPreview(); }
+
+/* ── Kirim pesan ── */
+async function sendMessage(text){
+  // Re-check session jika currentUser belum ter-set
+  if(!currentUser){
+    const { data:{ session } } = await supabaseClient.auth.getSession();
+    if(session?.user){
+      const { data: profile } = await supabaseClient
+        .from("profiles").select("id,full_name,role").eq("id",session.user.id).single();
+      currentUser = {
+        id: session.user.id,
+        full_name: profile?.full_name || session.user.email.split("@")[0],
+        role: profile?.role || "pembeli",
+      };
+    } else {
+      document.getElementById("loginModal").classList.add("open");
+      return;
+    }
+  }
+  if(!currentRoom) return;
+  if(!text.trim() && !pendingImages.length) return;
+
+  const btn = document.getElementById("sendBtn");
+  btn.disabled = true;
+  btn.textContent = "Mengirim…";
+
+  // Simpan referensi lokal sebelum di-reset
+  const localImageCount = pendingImages.length;
+
+  // Upload gambar dulu jika ada
+  let imageUrl = "";
+  if(pendingImages.length){
+    btn.textContent = "Upload…";
+    const urls = await uploadImages(pendingImages);
+    if(urls.length === 0 && localImageCount > 0){
+      showToast("Gagal upload gambar. Pastikan bucket 'forum-images' sudah dibuat di Supabase Storage.");
+      btn.disabled = false;
+      btn.textContent = "Kirim ↑";
+      return;
+    }
+    imageUrl = urls.join(",");
+    pendingImages = [];
+    renderImgPreview();
+  }
+
+  const { data, error } = await supabaseClient.from("forum_messages").insert({
+    room_id: currentRoom.id,
+    body: text,
+    image_url: imageUrl || null,
+    sender_id: currentUser.id,
+    sender_name: currentUser.full_name,
+    sender_role: currentUser.role,
+  }).select().single();
+
+  btn.disabled = false;
+  btn.textContent = "Kirim ↑";
+
+  if(error){ showToast("Gagal kirim: "+error.message); return; }
+
+  // Render bubble (data dari Supabase sudah ada image_url)
+  const body = document.getElementById("chatBody");
+  body.querySelector(".chat-empty")?.remove();
+  if(body.querySelector(`[data-msg-id="${data.id}"]`)) return;
+  renderBubble(body, data);
+  body.scrollTop = body.scrollHeight;
+}
+
+/* ── Lightbox ── */
+function openLightbox(url){
+  document.getElementById("lightboxImg").src = url;
+  document.getElementById("lightbox").classList.add("open");
+}
+function closeLightbox(){ document.getElementById("lightbox").classList.remove("open"); }
+
+/* ── Helpers ── */
+function appendDateLabel(container, iso){
+  const d   = new Date(iso);
+  const now = new Date();
+  let label;
+  if(d.toDateString()===now.toDateString()) label="Hari ini";
+  else { const y=new Date(now); y.setDate(y.getDate()-1); label=d.toDateString()===y.toDateString()?"Kemarin":d.toLocaleDateString("id-ID",{weekday:"long",day:"numeric",month:"long"}); }
+  const el = document.createElement("div");
+  el.className = "chat-date-label";
+  el.textContent = label;
+  container.appendChild(el);
+}
+
+/* ── Wire composer ── */
+document.addEventListener("DOMContentLoaded", ()=>{
+  const form  = document.getElementById("chatComposer");
+  const input = document.getElementById("msgInput");
+  if(!form||!input) return;
+
+  // Auto-resize
+  input.addEventListener("input", ()=>{
+    input.style.height="auto";
+    input.style.height=Math.min(input.scrollHeight,120)+"px";
+  });
+
+  // Enter kirim
+  input.addEventListener("keydown", e=>{
+    if(e.key==="Enter"&&!e.shiftKey&&!mentionBox?.classList.contains("open")){
+      e.preventDefault(); form.dispatchEvent(new Event("submit"));
+    }
+  });
+
+  form.addEventListener("submit", async e=>{
+    e.preventDefault();
+    const text = input.value;
+    input.value=""; input.style.height="auto";
+    await sendMessage(text.trim());
+  });
+
+  setupMentionAutocomplete();
+  setupImagePicker();
+  initForum();
+});
+
+document.getElementById("menuToggle")?.addEventListener("click", openDrawer);
+</script>
+
+<!--
+=================================================================
+  ⚠️  PENTING — Jalankan SQL ini di Supabase sebelum pakai forum
+  Supabase Dashboard → SQL Editor → New Query → Paste → Run
+=================================================================
+
+-- Tambah kolom image_url ke forum_messages (kalau pakai schema_forum.sql yang lama)
+alter table public.forum_messages
+  add column if not exists image_url text;
+
+-- Buat bucket storage untuk gambar forum
+insert into storage.buckets (id, name, public)
+values ('forum-images', 'forum-images', true)
+on conflict (id) do nothing;
+
+-- Policy: siapa saja bisa lihat gambar
+create policy "forum_images_public_read" on storage.objects
+  for select using (bucket_id = 'forum-images');
+
+-- Policy: user login bisa upload
+create policy "forum_images_auth_upload" on storage.objects
+  for insert with check (
+    bucket_id = 'forum-images' and auth.role() = 'authenticated'
+  );
+
+=================================================================
+-->
+</body>
+</html>

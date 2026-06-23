@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Dashboard Penjual — Rekberin</title>
+<link rel="stylesheet" href="style.css">
+<style>
+/* ── Dashboard-specific styles (shared with pembeli) ── */
+.dash-shell { display:flex; min-height:calc(100vh - 64px); background:#0F1117; }
+
+.dash-sidebar {
+  width:220px; flex-shrink:0;
+  background:#13161E; border-right:1px solid rgba(255,255,255,.06);
+  padding:28px 0; display:flex; flex-direction:column; gap:4px;
+  position:sticky; top:64px; height:calc(100vh - 64px); overflow-y:auto;
+}
+.dash-sidebar a {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 20px; color:rgba(255,255,255,.55);
+  font-size:14px; font-weight:500; text-decoration:none;
+  border-left:2px solid transparent; transition:all .18s;
+}
+.dash-sidebar a:hover  { color:#fff; background:rgba(255,255,255,.04); }
+.dash-sidebar a.active { color:#E7A93D; border-left-color:#E7A93D; background:rgba(231,169,61,.07); }
+.dash-sidebar .sidebar-sep { height:1px; background:rgba(255,255,255,.06); margin:12px 16px; }
+
+.dash-main { flex:1; padding:32px; max-width:960px; }
+.dash-main h2 { font-size:20px; font-weight:700; color:#fff; margin:0 0 20px; }
+.dash-main h3 { font-size:15px; font-weight:600; color:rgba(255,255,255,.7); margin:28px 0 12px; }
+
+.stat-row { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:14px; margin-bottom:28px; }
+.stat-card {
+  background:#1A1E29; border:1px solid rgba(255,255,255,.07);
+  border-radius:14px; padding:18px 20px;
+}
+.stat-card .sc-label { font-size:12px; color:rgba(255,255,255,.45); margin-bottom:6px; }
+.stat-card .sc-val { font-size:22px; font-weight:700; color:#fff; }
+.stat-card .sc-sub { font-size:11px; color:rgba(255,255,255,.35); margin-top:4px; }
+.stat-card.green .sc-val { color:#16A37A; }
+.stat-card.gold  .sc-val { color:#E7A93D; }
+.stat-card.blue  .sc-val { color:#4DA3F5; }
+
+.order-table { width:100%; border-collapse:collapse; }
+.order-table th {
+  text-align:left; font-size:11px; font-weight:600; letter-spacing:.04em;
+  color:rgba(255,255,255,.35); padding:0 14px 10px; text-transform:uppercase;
+}
+.order-table td {
+  padding:14px; font-size:13px; color:rgba(255,255,255,.8);
+  border-top:1px solid rgba(255,255,255,.05);
+}
+.order-table tr:hover td { background:rgba(255,255,255,.02); }
+.order-table .product-col { font-weight:600; color:#fff; max-width:200px; }
+
+.badge-status {
+  display:inline-flex; align-items:center; gap:5px;
+  font-size:11px; font-weight:600; padding:3px 9px;
+  border-radius:20px; white-space:nowrap;
+}
+.s-pending    { background:rgba(231,169,61,.12); color:#E7A93D; }
+.s-paid,
+.s-processing { background:rgba(46,134,222,.12); color:#4DA3F5; }
+.s-delivered  { background:rgba(156,132,223,.15); color:#A78BFA; }
+.s-completed  { background:rgba(22,163,122,.12);  color:#16A37A; }
+.s-refunded,
+.s-cancelled  { background:rgba(255,255,255,.07); color:rgba(255,255,255,.4); }
+.s-disputed   { background:rgba(239,68,68,.12);   color:#F87171; }
+
+/* Action button: mark as delivered */
+.btn-deliver {
+  font-size:12px; font-weight:600; padding:5px 12px;
+  border-radius:8px; border:none; cursor:pointer;
+  background:#E7A93D; color:#181B22; transition:opacity .18s;
+}
+.btn-deliver:hover { opacity:.85; }
+.btn-deliver:disabled { opacity:.4; cursor:default; }
+
+/* Wallet penjual */
+.wallet-card {
+  background:linear-gradient(135deg,#B97E1C,#E7A93D);
+  border-radius:16px; padding:24px 28px; margin-bottom:20px;
+  display:flex; flex-wrap:wrap; gap:20px; justify-content:space-between; align-items:center;
+}
+.wallet-card .wc-label { font-size:12px; color:rgba(0,0,0,.6); margin-bottom:4px; }
+.wallet-card .wc-val   { font-size:26px; font-weight:700; color:#181B22; }
+.wallet-card .wc-hold  { font-size:12px; color:rgba(0,0,0,.55); margin-top:4px; }
+
+/* Products table */
+.prod-row { display:flex; align-items:center; gap:14px; padding:12px 0; border-top:1px solid rgba(255,255,255,.05); }
+.prod-thumb {
+  width:42px; height:42px; border-radius:10px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; background:#1E2230;
+}
+.prod-info { flex:1; min-width:0; }
+.prod-info .pi-title { font-size:13px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.prod-info .pi-meta  { font-size:11px; color:rgba(255,255,255,.4); margin-top:2px; }
+.prod-price { font-size:14px; font-weight:700; color:#E7A93D; white-space:nowrap; }
+.prod-sold  { font-size:11px; color:rgba(255,255,255,.4); text-align:right; }
+
+/* Notif */
+.notif-list { display:flex; flex-direction:column; gap:8px; }
+.notif-item {
+  display:flex; gap:12px; align-items:flex-start;
+  background:#1A1E29; border:1px solid rgba(255,255,255,.06);
+  border-radius:12px; padding:14px 16px;
+}
+.notif-item.unread { border-color:rgba(231,169,61,.3); }
+.notif-item .ni-dot {
+  width:8px; height:8px; border-radius:50%; flex-shrink:0;
+  margin-top:5px; background:rgba(255,255,255,.2);
+}
+.notif-item.unread .ni-dot { background:#E7A93D; }
+.notif-item .ni-body .ni-title { font-size:13px; font-weight:600; color:#fff; margin-bottom:3px; }
+.notif-item .ni-body .ni-text  { font-size:12px; color:rgba(255,255,255,.5); }
+.notif-item .ni-body .ni-time  { font-size:11px; color:rgba(255,255,255,.3); margin-top:4px; }
+
+/* Add product form */
+.add-form {
+  background:#1A1E29; border:1px solid rgba(255,255,255,.07);
+  border-radius:16px; padding:24px; margin-bottom:20px;
+}
+.add-form label { display:block; font-size:12px; color:rgba(255,255,255,.5); margin-bottom:6px; }
+.add-form input, .add-form select, .add-form textarea {
+  width:100%; box-sizing:border-box;
+  background:#111420; border:1px solid rgba(255,255,255,.1);
+  color:#fff; border-radius:8px; padding:10px 12px;
+  font-size:13px; margin-bottom:14px; font-family:inherit;
+}
+.add-form textarea { resize:vertical; min-height:80px; }
+.add-form .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+
+.empty-dash { text-align:center; padding:48px 24px; color:rgba(255,255,255,.35); }
+.empty-dash .glyph { font-size:40px; margin-bottom:12px; }
+
+.err-banner {
+  background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.25);
+  border-radius:10px; padding:12px 16px; color:#F87171;
+  font-size:13px; margin-bottom:20px; display:none;
+}
+
+/* ── Upload foto produk ── */
+.upload-zone {
+  border:2px dashed rgba(255,255,255,.15); border-radius:12px;
+  padding:28px 20px; text-align:center; cursor:pointer;
+  transition:border-color .2s, background .2s; margin-bottom:14px;
+  position:relative; overflow:hidden;
+}
+.upload-zone:hover, .upload-zone.drag-over {
+  border-color:#E7A93D; background:rgba(231,169,61,.05);
+}
+.upload-zone input[type="file"] {
+  position:absolute; inset:0; opacity:0; cursor:pointer;
+  width:100%; height:100%; margin:0; padding:0;
+}
+.upload-zone .uz-icon  { font-size:32px; margin-bottom:8px; line-height:1; }
+.upload-zone .uz-text  { font-size:13px; color:rgba(255,255,255,.5); }
+.upload-zone .uz-hint  { font-size:11px; color:rgba(255,255,255,.3); margin-top:4px; }
+
+.photo-preview-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(80px,1fr));
+  gap:8px; margin-bottom:14px;
+}
+.photo-preview-item {
+  position:relative; aspect-ratio:1; border-radius:8px; overflow:hidden;
+  background:#1E2230;
+}
+.photo-preview-item img  { width:100%; height:100%; object-fit:cover; }
+.photo-preview-item .pp-del {
+  position:absolute; top:3px; right:3px;
+  background:rgba(0,0,0,.6); color:#fff; border:none; border-radius:50%;
+  width:20px; height:20px; cursor:pointer; font-size:11px;
+  display:flex; align-items:center; justify-content:center;
+}
+.photo-preview-item .pp-main-badge {
+  position:absolute; bottom:3px; left:3px;
+  background:#E7A93D; color:#181B22; font-size:9px; font-weight:700;
+  border-radius:4px; padding:1px 4px;
+}
+
+/* ── Modal detail produk ── */
+.prod-detail-modal {
+  position:fixed; inset:0; z-index:1000;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(0,0,0,.7); backdrop-filter:blur(4px);
+  padding:16px;
+}
+.prod-detail-modal .pdm-box {
+  background:#1A1E29; border:1px solid rgba(255,255,255,.1);
+  border-radius:20px; max-width:560px; width:100%; max-height:88vh;
+  overflow-y:auto; position:relative;
+}
+.prod-detail-modal .pdm-gallery {
+  border-radius:20px 20px 0 0; overflow:hidden;
+  background:#111420; aspect-ratio:16/9; position:relative;
+}
+.prod-detail-modal .pdm-gallery img {
+  width:100%; height:100%; object-fit:cover;
+}
+.prod-detail-modal .pdm-gallery .pdm-no-img {
+  display:flex; align-items:center; justify-content:center;
+  height:100%; font-size:60px;
+}
+.prod-detail-modal .pdm-thumbs {
+  display:flex; gap:6px; padding:10px 20px 0; flex-wrap:wrap;
+}
+.prod-detail-modal .pdm-thumbs img {
+  width:48px; height:48px; border-radius:8px; object-fit:cover;
+  cursor:pointer; opacity:.6; border:2px solid transparent; transition:all .15s;
+}
+.prod-detail-modal .pdm-thumbs img.active { opacity:1; border-color:#E7A93D; }
+.prod-detail-modal .pdm-body { padding:20px 24px 28px; }
+.prod-detail-modal .pdm-title { font-size:18px; font-weight:700; color:#fff; margin:0 0 8px; }
+.prod-detail-modal .pdm-meta  { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+.prod-detail-modal .pdm-badge-cat {
+  font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px;
+  background:rgba(77,163,245,.15); color:#4DA3F5;
+}
+.prod-detail-modal .pdm-desc {
+  font-size:13px; color:rgba(255,255,255,.65); line-height:1.7;
+  white-space:pre-wrap; background:#111420;
+  border-radius:10px; padding:14px 16px; margin-bottom:18px;
+}
+.prod-detail-modal .pdm-price { font-size:22px; font-weight:700; color:#E7A93D; margin-bottom:4px; }
+.prod-detail-modal .pdm-stats { font-size:12px; color:rgba(255,255,255,.4); margin-bottom:18px; }
+.prod-detail-modal .pdm-close {
+  position:absolute; top:14px; right:16px;
+  background:rgba(0,0,0,.45); color:#fff; border:none; border-radius:50%;
+  width:32px; height:32px; cursor:pointer; font-size:16px;
+  display:flex; align-items:center; justify-content:center;
+  backdrop-filter:blur(4px); z-index:10;
+}
+
+/* Chart bar (revenue per produk) */
+.chart-bar { margin-bottom:10px; }
+.chart-bar .cb-label { display:flex; justify-content:space-between; font-size:12px; color:rgba(255,255,255,.6); margin-bottom:4px; }
+.chart-bar .cb-track { background:rgba(255,255,255,.06); border-radius:20px; height:8px; }
+.chart-bar .cb-fill  { background:#E7A93D; border-radius:20px; height:8px; transition:width .6s ease; }
+
+/* ── BOTTOM NAV (mobile only) ── */
+.mobile-bottom-nav {
+  display:none;
+  position:fixed; bottom:0; left:0; right:0; z-index:200;
+  background:#13161E; border-top:1px solid rgba(255,255,255,.08);
+  padding:6px 0 env(safe-area-inset-bottom, 6px);
+}
+.mobile-bottom-nav .mbn-inner {
+  display:flex; justify-content:space-around; align-items:center;
+}
+.mobile-bottom-nav button {
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  background:none; border:none; color:rgba(255,255,255,.45);
+  font-size:9px; font-weight:600; letter-spacing:.02em;
+  padding:4px 6px; cursor:pointer; position:relative;
+  text-transform:uppercase; transition:color .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.mobile-bottom-nav button .mbn-icon { font-size:19px; line-height:1; }
+.mobile-bottom-nav button.active { color:#E7A93D; }
+.mobile-bottom-nav button .mbn-badge {
+  position:absolute; top:2px; right:4px;
+  background:#E7A93D; color:#181B22;
+  font-size:9px; border-radius:20px; padding:1px 4px; display:none;
+}
+
+/* ── ORDER CARDS mobile ── */
+.order-cards { display:none; flex-direction:column; gap:10px; }
+.order-card {
+  background:#1A1E29; border:1px solid rgba(255,255,255,.07);
+  border-radius:12px; padding:14px 16px;
+}
+.order-card .oc-title { font-size:14px; font-weight:700; color:#fff; margin-bottom:6px; }
+.order-card .oc-row   { display:flex; justify-content:space-between; align-items:center; margin-top:6px; }
+.order-card .oc-label { font-size:11px; color:rgba(255,255,255,.4); }
+.order-card .oc-val   { font-size:13px; color:rgba(255,255,255,.8); font-weight:500; }
+
+@media(max-width:640px){
+  .dash-sidebar { display:none !important; }
+  .mobile-bottom-nav { display:block; }
+
+  .dash-main {
+    padding:16px 14px 80px;
+    max-width:100%;
+  }
+  .dash-main h2 { font-size:17px; margin-bottom:14px; }
+  .dash-main h3 { font-size:13px; margin:20px 0 10px; }
+
+  .stat-row { grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+  .stat-card { padding:14px 16px; border-radius:12px; }
+  .stat-card .sc-val { font-size:18px; }
+
+  /* Tabel → cards */
+  .order-table { display:none; }
+  .order-cards { display:flex; }
+
+  /* Form produk: 1 kolom */
+  .add-form .form-row { grid-template-columns:1fr !important; }
+  .add-form { padding:16px; border-radius:12px; }
+
+  /* Profile: 1 kolom */
+  #tab-profile > div[style*="grid-template-columns:1fr 1fr"] {
+    grid-template-columns:1fr !important;
+  }
+
+  /* Wallet */
+  .wallet-card { padding:18px 20px; }
+  .wallet-card .wc-val { font-size:20px; }
+
+  /* Chat */
+  .chat-page {
+    flex-direction:column !important;
+    height:calc(100vh - 140px);
+  }
+  .chat-inbox {
+    width:100% !important;
+    max-height:180px;
+    border-right:none !important;
+    border-bottom:1px solid rgba(255,255,255,.06);
+  }
+  .chat-conversation { flex:1; min-height:0; }
+
+  /* Prod row */
+  .prod-row { gap:10px; }
+  .prod-info .pi-title { font-size:12px; }
+
+  /* Header */
+  .nav-profile-info { display:none !important; }
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-top">
+    <a href="index.html" class="brand"><span class="brand-mark"></span>Rekberin<small>Verified marketplace</small></a>
+    <nav class="main-nav">
+      <a href="index.html">Beranda</a>
+      <a href="products.html">Produk</a>
+      <a href="forum.html">Forum</a>
+    </nav>
+    <div class="header-actions">
+      <a href="login.html" id="navLogin" class="btn btn-ghost-light btn-sm">Masuk</a>
+      <a href="register.html" id="navRegister" class="btn btn-gold btn-sm">Daftar</a>
+    </div>
+  </div>
+</header>
+
+<div class="dash-shell">
+
+  <nav class="dash-sidebar">
+    <a href="#overview"      class="active" onclick="showTab('overview',this)">🏠 Ringkasan</a>
+    <a href="#orders"                       onclick="showTab('orders',this)">📦 Pesanan Masuk</a>
+    <a href="#products"                     onclick="showTab('products',this)">🛍️ Produk Saya</a>
+    <a href="#wallet"                       onclick="showTab('wallet',this)">💰 Saldo</a>
+    <a href="#messages"                     onclick="showTab('messages',this)">💬 Pesan <span id="unreadChatBadge" style="display:none;background:#E7A93D;color:#181B22;font-size:10px;border-radius:20px;padding:1px 6px;margin-left:4px;"></span></a>
+    <a href="#notifications"               onclick="showTab('notifications',this)">🔔 Notifikasi <span id="unreadBadge" style="display:none;background:#E7A93D;color:#181B22;font-size:10px;border-radius:20px;padding:1px 6px;margin-left:4px;"></span></a>
+    <a href="#profile" onclick="showTab('profile',this)">👤 Profil Saya</a>
+    <div class="sidebar-sep"></div>
+    <a href="products.html">🛒 Lihat Toko</a>
+    <a href="#" id="logoutLink">🚪 Keluar</a>
+  </nav>
+
+  <main class="dash-main">
+    <div class="err-banner" id="errBanner"></div>
+
+    <!-- ── TAB: OVERVIEW ── -->
+    <div id="tab-overview">
+      <h2 id="greetingTitle">Memuat dashboard…</h2>
+
+      <div class="stat-row" id="statRow">
+        <div class="stat-card"><div class="sc-label">Total Pesanan</div><div class="sc-val" style="color:rgba(255,255,255,.3);">…</div></div>
+        <div class="stat-card green"><div class="sc-label">Selesai</div><div class="sc-val" style="color:rgba(255,255,255,.3);">…</div></div>
+        <div class="stat-card blue"><div class="sc-label">Menunggu Aksi</div><div class="sc-val" style="color:rgba(255,255,255,.3);">…</div></div>
+        <div class="stat-card gold"><div class="sc-label">Total Pendapatan</div><div class="sc-val" style="font-size:15px;color:rgba(255,255,255,.3);">…</div></div>
+        <div class="stat-card"><div class="sc-label">Rating Rata-rata</div><div class="sc-val" style="color:rgba(255,255,255,.3);">…</div></div>
+        <div class="stat-card"><div class="sc-label">Produk Aktif</div><div class="sc-val" style="color:rgba(255,255,255,.3);">…</div></div>
+      </div>
+
+      <h3>Pesanan Perlu Diproses</h3>
+      <div id="pendingOrdersWrap"></div>
+
+      <h3>Produk Terlaris</h3>
+      <div id="topProductsWrap"></div>
+    </div>
+
+    <!-- ── TAB: PESANAN ── -->
+    <div id="tab-orders" style="display:none">
+      <h2>📦 Semua Pesanan Masuk</h2>
+      <div id="allOrdersWrap"></div>
+    </div>
+
+    <!-- ── TAB: PRODUK ── -->
+    <div id="tab-products" style="display:none">
+      <h2>🛍️ Produk Saya</h2>
+
+      <div class="add-form" id="addProductForm">
+        <h3 style="margin-top:0;color:#E7A93D;">+ Tambah Produk Baru</h3>
+        <label>Judul Produk</label>
+        <input type="text" id="pTitle" placeholder="Contoh: Mobile Legends 86 Diamond">
+        <div class="form-row">
+          <div>
+            <label>Kategori</label>
+            <select id="pCat">
+              <option value="digital">Produk Digital</option>
+              <option value="game">Produk Game</option>
+              <option value="jasa">Jasa</option>
+            </select>
+          </div>
+          <div>
+            <label>Harga (Rp)</label>
+            <input type="number" id="pPrice" placeholder="22000" min="1000">
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label>Stok</label>
+            <input type="number" id="pStock" placeholder="1" min="1" value="1">
+          </div>
+          <div>
+            <label>Badge</label>
+            <select id="pBadge">
+              <option value="Instan">Instan</option>
+              <option value="Manual">Manual</option>
+              <option value="Jasa">Jasa</option>
+            </select>
+          </div>
+        </div>
+
+        <label>Foto Produk (maks. 5 foto, foto pertama = cover)</label>
+        <div class="photo-preview-grid" id="photoPreviewGrid" style="display:none;"></div>
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="pPhotos" accept="image/*" multiple onchange="handlePhotoSelect(this)">
+          <div class="uz-icon">📷</div>
+          <div class="uz-text">Klik atau seret foto ke sini</div>
+          <div class="uz-hint">JPG, PNG, WEBP · Maks. 5 foto · 3 MB/foto</div>
+        </div>
+
+        <label>Deskripsi Produk</label>
+        <textarea id="pDesc" placeholder="Jelaskan produk kamu secara detail: apa yang didapat, cara kerja, syarat & ketentuan, estimasi waktu, dll." style="min-height:120px;"></textarea>
+
+        <div id="uploadProgress" style="display:none;margin-bottom:12px;">
+          <div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:6px;" id="uploadProgressText">Mengupload foto…</div>
+          <div style="background:rgba(255,255,255,.06);border-radius:20px;height:6px;">
+            <div id="uploadProgressBar" style="background:#E7A93D;border-radius:20px;height:6px;width:0%;transition:width .3s;"></div>
+          </div>
+        </div>
+
+        <button class="btn btn-gold" id="addProdBtn" onclick="addProduct()">Simpan Produk</button>
+      </div>
+
+      <div id="myProductsWrap"></div>
+    </div>
+
+    <!-- ── TAB: SALDO ── -->
+    <div id="tab-wallet" style="display:none">
+      <h2>💰 Saldo Penjual</h2>
+      <div id="walletWrap"></div>
+    </div>
+
+    <!-- ── TAB: PESAN ── -->
+    <div id="tab-messages" style="display:none">
+      <h2>💬 Pesan</h2>
+      <div class="chat-page">
+        <div class="chat-inbox" id="chatInbox">
+          <div class="chat-empty">Memuat percakapan…</div>
+        </div>
+        <div class="chat-conversation" id="chatConversation">
+          <div class="chat-placeholder">Pilih percakapan di sebelah kiri untuk mulai membaca.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TAB: NOTIFIKASI ── -->
+    <div id="tab-notifications" style="display:none">
+      <h2>🔔 Notifikasi</h2>
+      <div class="notif-list" id="notifList">
+        <div class="empty-dash"><div class="glyph">⏳</div><p>Memuat…</p></div>
+      </div>
+    </div>
+
+    <!-- ── TAB: PROFIL ── -->
+    <div id="tab-profile" style="display:none">
+      <h2>👤 Profil Saya</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+        <div style="background:#1A1E29;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:24px;">
+          <h3 style="margin-top:0;margin-bottom:18px;">Informasi Pribadi</h3>
+          <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;color:rgba(255,255,255,.4);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;">Nama Lengkap</label>
+            <input id="profileName" type="text" placeholder="Nama lengkap" style="width:100%;background:#0F1117;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 12px;color:#fff;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
+          </div>
+          <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;color:rgba(255,255,255,.4);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;">Username / Nama Toko</label>
+            <input id="profileUsername" type="text" placeholder="@username" style="width:100%;background:#0F1117;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 12px;color:#fff;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
+          </div>
+          <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;color:rgba(255,255,255,.4);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;">Nomor Telepon</label>
+            <input id="profilePhone" type="tel" placeholder="+62 8xx xxxx xxxx" style="width:100%;background:#0F1117;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 12px;color:#fff;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
+          </div>
+          <div style="margin-bottom:18px;">
+            <label style="display:block;font-size:12px;color:rgba(255,255,255,.4);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;">Deskripsi Toko</label>
+            <textarea id="profileBio" rows="3" placeholder="Ceritakan tentang toko kamu..." style="width:100%;background:#0F1117;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 12px;color:#fff;font-size:13px;font-family:inherit;outline:none;resize:vertical;box-sizing:border-box;"></textarea>
+          </div>
+          <button onclick="saveProfile()" class="btn btn-verified" style="width:100%;background:#E7A93D;color:#181B22;">Simpan Profil</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div style="background:#1A1E29;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:24px;">
+            <h3 style="margin-top:0;margin-bottom:18px;">✉️ Ganti Email</h3>
+            <div style="margin-bottom:6px;font-size:12px;color:rgba(255,255,255,.4);">Email Saat Ini</div>
+            <div id="currentEmail" style="font-size:13px;color:rgba(255,255,255,.6);background:#0F1117;border:1px solid rgba(255,255,255,.07);border-radius:8px;padding:10px 12px;margin-bottom:14px;">—</div>
+            <div style="margin-bottom:14px;">
+              <label style="display:block;font-size:12px;color:rgba(255,255,255,.4);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;">Email Baru</label>
+              <input id="newEmail" type="email" placeholder="emailbaru@contoh.com" style="width:100%;background:#0F1117;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 12px;color:#fff;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
+            </div>
+            <button onclick="changeEmail()" style="width:100%;padding:11px;border-radius:8px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#181B22;font-size:13px;font-weight:600;border:none;cursor:pointer;font-family:inherit;">Kirim Verifikasi Email</button>
+          </div>
+          <div style="background:#1A1E29;border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:24px;">
+            <h3 style="margin-top:0;margin-bottom:18px;">🔒 Ganti Password</h3>
+            <div style="margin-bottom:14px;">
+              <label style="display:block;font-size:12px;color:rgba(255,255,255,.4);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;">Password Baru</label>
+              <input id="newPassword" type="password" placeholder="Minimal 6 karakter" style="width:100%;background:#0F1117;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 12px;color:#fff;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:18px;">
+              <label style="display:block;font-size:12px;color:rgba(255,255,255,.4);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em;">Konfirmasi Password Baru</label>
+              <input id="confirmPassword" type="password" placeholder="Ulangi password baru" style="width:100%;background:#0F1117;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:10px 12px;color:#fff;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;">
+            </div>
+            <button onclick="changePassword()" style="width:100%;padding:11px;border-radius:8px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#181B22;font-size:13px;font-weight:600;border:none;cursor:pointer;font-family:inherit;">Perbarui Password</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+</div>
+
+<!-- ── MOBILE BOTTOM NAV ── -->
+<nav class="mobile-bottom-nav" id="mobileBottomNav">
+  <div class="mbn-inner">
+    <button class="active" onclick="showTab('overview',this);setMbn(this)">
+      <span class="mbn-icon">🏠</span>Ringkasan
+    </button>
+    <button onclick="showTab('orders',this);setMbn(this)">
+      <span class="mbn-icon">📦</span>Pesanan
+    </button>
+    <button onclick="showTab('products',this);setMbn(this)">
+      <span class="mbn-icon">🛍️</span>Produk
+    </button>
+    <button onclick="showTab('messages',this);setMbn(this)">
+      <span class="mbn-icon">💬</span>Pesan
+      <span class="mbn-badge" id="mbnChatBadge"></span>
+    </button>
+    <button onclick="showTab('profile',this);setMbn(this)">
+      <span class="mbn-icon">👤</span>Profil
+    </button>
+  </div>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="data.js"></script>
+<script src="config.js"></script>
+<script src="chat.js"></script>
+<script src="app.js"></script>
+<script>
+const fmt = n => "Rp " + Number(n).toLocaleString("id-ID");
+const timeAgo = iso => {
+  const d = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if(d < 60)   return "baru saja";
+  if(d < 3600) return Math.floor(d/60) + " menit lalu";
+  if(d < 86400) return Math.floor(d/3600) + " jam lalu";
+  return Math.floor(d/86400) + " hari lalu";
+};
+const statusLabel = {
+  pending_payment:"Menunggu Bayar", paid:"Dibayar",
+  processing:"Diproses", delivered:"Dikirim",
+  completed:"Selesai", disputed:"Sengketa",
+  refunded:"Dikembalikan", cancelled:"Dibatalkan"
+};
+const statusClass = {
+  pending_payment:"s-pending", paid:"s-paid", processing:"s-processing",
+  delivered:"s-delivered", completed:"s-completed",
+  disputed:"s-disputed", refunded:"s-refunded", cancelled:"s-cancelled"
+};
+
+function showErr(msg){ const b=document.getElementById("errBanner"); b.style.display="block"; b.textContent=msg; }
+
+/* ── mobile bottom nav sync ── */
+function setMbn(btn){
+  document.querySelectorAll(".mobile-bottom-nav button").forEach(b=>b.classList.remove("active"));
+  if(btn) btn.classList.add("active");
+}
+
+/* ── build order table + mobile cards ── */
+function ordersTable(orders){
+  if(!orders.length) return `<div class="empty-dash"><div class="glyph">📦</div><p>Belum ada pesanan.</p></div>`;
+
+  const tableHTML = `<table class="order-table">
+    <thead><tr>
+      <th>Pembeli</th><th>Produk</th><th>Total</th><th>Status</th><th></th>
+    </tr></thead>
+    <tbody>
+    ${orders.map(o=>`<tr>
+      <td style="font-size:12px;color:rgba(255,255,255,.5);">${o.buyer_name||'—'}</td>
+      <td class="product-col">${o.product_title}</td>
+      <td>${fmt(o.total_amount)}</td>
+      <td><span class="badge-status ${statusClass[o.status]||''}">${statusLabel[o.status]||o.status}</span></td>
+      <td>${o.status==='paid'||o.status==='processing'?`<button class="btn-deliver" onclick="markDelivered('${o.id}',this)">Kirim</button>`:""}</td>
+    </tr>`).join("")}
+    </tbody></table>`;
+
+  const cardsHTML = `<div class="order-cards">
+    ${orders.map(o=>`
+    <div class="order-card">
+      <div class="oc-title">${o.product_title}</div>
+      <div class="oc-row">
+        <span class="oc-label">Pembeli</span>
+        <span class="oc-val">${o.buyer_name||'—'}</span>
+      </div>
+      <div class="oc-row">
+        <span class="oc-label">Total</span>
+        <span class="oc-val">${fmt(o.total_amount)}</span>
+      </div>
+      <div class="oc-row">
+        <span class="badge-status ${statusClass[o.status]||''}">${statusLabel[o.status]||o.status}</span>
+        ${o.status==='paid'||o.status==='processing'?`<button class="btn-deliver" onclick="markDelivered('${o.id}',this)">Kirim</button>`:""}
+      </div>
+    </div>`).join("")}
+  </div>`;
+
+  return tableHTML + cardsHTML;
+}
+function showTab(name, el){
+  ["overview","orders","products","wallet","messages","notifications","profile"].forEach(t=>{
+    document.getElementById("tab-"+t).style.display = (t===name)?"block":"none";
+  });
+  document.querySelectorAll(".dash-sidebar a").forEach(a=>a.classList.remove("active"));
+  if(el) el.classList.add("active");
+  if(name==="orders")        loadOrders();
+  if(name==="products")      loadMyProducts();
+  if(name==="wallet")        loadWallet();
+  if(name==="messages")      loadMessagesTab();
+  if(name==="notifications") loadNotifs();
+  if(name==="profile")       loadProfile();
+}
+
+/* ── mark order as delivered ── */
+async function markDelivered(orderId, btn){
+  btn.disabled = true; btn.textContent = "Memproses…";
+  try {
+    const { error } = await supabaseClient
+      .from("orders")
+      .update({ status:"delivered", delivered_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .eq("id", orderId);
+    if(error) throw error;
+
+    // notif pembeli
+    const { data: ord } = await supabaseClient.from("orders").select("buyer_id,product_title").eq("id",orderId).single();
+    if(ord){
+      await supabaseClient.from("notifications").insert({
+        user_id: ord.buyer_id, type:"info",
+        title:"📬 Pesanan dikirim!",
+        body: `Penjual mengklaim pesanan "${ord.product_title}" sudah dikirim. Silakan konfirmasi jika sudah terima.`,
+        ref_order_id: orderId
+      });
+    }
+
+    showToast("✅ Status diperbarui ke 'Dikirim'. Tunggu konfirmasi pembeli.");
+    await loadOverview(); loadOrders();
+  } catch(e){
+    showToast("Gagal: " + e.message);
+    btn.disabled = false; btn.textContent = "Tandai Dikirim";
+  }
+}
+
+/* ── LOAD OVERVIEW ── */
+async function loadOverview(){
+  try {
+    const { data, error } = await supabaseClient.from("seller_dashboard").select("*").single();
+    if(error) throw error;
+
+    document.getElementById("greetingTitle").textContent =
+      "Halo, " + (data.full_name?.split(" ")[0] || "Penjual") + " 👋";
+
+    const avgRating = parseFloat(data.avg_rating||0).toFixed(1);
+    document.getElementById("statRow").innerHTML = `
+      <div class="stat-card">
+        <div class="sc-label">Total Pesanan</div>
+        <div class="sc-val">${data.total_orders}</div>
+      </div>
+      <div class="stat-card green">
+        <div class="sc-label">Selesai</div>
+        <div class="sc-val">${data.completed_orders}</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="sc-label">Perlu Diproses</div>
+        <div class="sc-val">${data.active_orders}</div>
+        <div class="sc-sub">ditahan rekber</div>
+      </div>
+      <div class="stat-card gold">
+        <div class="sc-label">Total Pendapatan</div>
+        <div class="sc-val" style="font-size:15px;">${fmt(data.total_revenue)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-label">Rating</div>
+        <div class="sc-val">★ ${avgRating}</div>
+        <div class="sc-sub">${data.total_reviews} ulasan</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-label">Produk Aktif</div>
+        <div class="sc-val">${data.active_products}</div>
+      </div>`;
+
+    // orders perlu diproses (paid/processing)
+    const { data: pendingOrds } = await supabaseClient
+      .from("orders").select("*").eq("seller_id", data.user_id)
+      .in("status",["paid","processing"])
+      .order("created_at",{ascending:false}).limit(10);
+
+    if(!pendingOrds||!pendingOrds.length){
+      document.getElementById("pendingOrdersWrap").innerHTML =
+        `<div class="empty-dash" style="padding:24px;"><div class="glyph">✅</div><p>Tidak ada pesanan yang perlu diproses.</p></div>`;
+    } else {
+      document.getElementById("pendingOrdersWrap").innerHTML = sellerOrdersTable(pendingOrds);
+    }
+
+    // top produk by revenue
+    const { data: topProds } = await supabaseClient
+      .from("products").select("title,sold_count,price,icon,grad_start,grad_end")
+      .eq("seller_id", data.user_id)
+      .order("sold_count",{ascending:false}).limit(5);
+
+    if(!topProds||!topProds.length){
+      document.getElementById("topProductsWrap").innerHTML =
+        `<div class="empty-dash" style="padding:24px;"><div class="glyph">🛍️</div><p>Belum ada produk. Tambah produk dulu!</p></div>`;
+    } else {
+      const maxSold = Math.max(...topProds.map(p=>p.sold_count),1);
+      document.getElementById("topProductsWrap").innerHTML = topProds.map(p=>`
+        <div class="chart-bar">
+          <div class="cb-label">
+            <span>${p.icon||"📦"} ${p.title}</span>
+            <span>${p.sold_count} terjual · ${fmt(p.price)}</span>
+          </div>
+          <div class="cb-track"><div class="cb-fill" style="width:${Math.round(p.sold_count/maxSold*100)}%"></div></div>
+        </div>`).join("");
+    }
+  } catch(e){
+    showErr("Gagal memuat dashboard: " + e.message);
+  }
+}
+
+/* ── seller orders table ── */
+function sellerOrdersTable(orders){
+  if(!orders.length) return `<div class="empty-dash"><div class="glyph">📦</div><p>Belum ada pesanan.</p></div>`;
+  return `<table class="order-table">
+    <thead><tr><th>Produk</th><th>Total</th><th>Status</th><th>Waktu</th><th></th></tr></thead>
+    <tbody>
+    ${orders.map(o=>`<tr>
+      <td class="product-col">${o.product_title}</td>
+      <td>${fmt(o.seller_receives)}</td>
+      <td><span class="badge-status ${statusClass[o.status]||''}">${statusLabel[o.status]||o.status}</span></td>
+      <td style="color:rgba(255,255,255,.4);font-size:12px;">${timeAgo(o.created_at)}</td>
+      <td>${o.status==='paid'||o.status==='processing'
+        ? `<button class="btn-deliver" onclick="markDelivered('${o.id}',this)">Tandai Dikirim</button>`
+        : ""}</td>
+    </tr>`).join("")}
+    </tbody></table>`;
+}
+
+/* ── LOAD ALL ORDERS ── */
+async function loadOrders(){
+  document.getElementById("allOrdersWrap").innerHTML = `<div class="empty-dash"><div class="glyph">⏳</div><p>Memuat…</p></div>`;
+  try {
+    const { data:{ user } } = await supabaseClient.auth.getUser();
+    const { data, error } = await supabaseClient
+      .from("orders").select("*").eq("seller_id", user.id)
+      .order("created_at",{ascending:false});
+    if(error) throw error;
+    document.getElementById("allOrdersWrap").innerHTML = sellerOrdersTable(data||[]);
+  } catch(e){
+    document.getElementById("allOrdersWrap").innerHTML = `<div class="empty-dash"><div class="glyph">⚠️</div><p>${e.message}</p></div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   FOTO PRODUK — preview + upload ke Supabase Storage
+   ═══════════════════════════════════════════ */
+let _selectedPhotos = []; // Array<File>
+
+function handlePhotoSelect(input){
+  const files = Array.from(input.files);
+  const remaining = 5 - _selectedPhotos.length;
+  if(!files.length) return;
+  if(remaining <= 0){ showToast("Maksimal 5 foto."); return; }
+
+  const toAdd = files.slice(0, remaining);
+  const oversized = toAdd.filter(f => f.size > 3 * 1024 * 1024);
+  if(oversized.length){ showToast(`${oversized.length} foto melebihi 3 MB dan dilewati.`); }
+
+  const valid = toAdd.filter(f => f.size <= 3 * 1024 * 1024);
+  _selectedPhotos = [..._selectedPhotos, ...valid].slice(0, 5);
+  renderPhotoPreviews();
+  // reset input supaya bisa pilih file yang sama lagi
+  input.value = "";
+}
+
+function renderPhotoPreviews(){
+  const grid = document.getElementById("photoPreviewGrid");
+  const zone = document.getElementById("uploadZone");
+  if(!_selectedPhotos.length){
+    grid.style.display = "none";
+    zone.style.display = "block";
+    return;
+  }
+  grid.style.display = "grid";
+  zone.style.display = _selectedPhotos.length < 5 ? "block" : "none";
+
+  grid.innerHTML = _selectedPhotos.map((f, i) => {
+    const url = URL.createObjectURL(f);
+    return `<div class="photo-preview-item">
+      <img src="${url}" alt="foto ${i+1}">
+      ${i===0?'<span class="pp-main-badge">Cover</span>':""}
+      <button class="pp-del" onclick="removePhoto(${i})" title="Hapus">✕</button>
+    </div>`;
+  }).join("");
+}
+
+function removePhoto(idx){
+  _selectedPhotos.splice(idx, 1);
+  renderPhotoPreviews();
+}
+
+async function uploadPhotos(userId, productId){
+  if(!_selectedPhotos.length) return [];
+  const urls = [];
+  const prog = document.getElementById("uploadProgress");
+  const bar  = document.getElementById("uploadProgressBar");
+  const txt  = document.getElementById("uploadProgressText");
+  prog.style.display = "block";
+
+  for(let i = 0; i < _selectedPhotos.length; i++){
+    const file = _selectedPhotos[i];
+    const ext  = file.name.split(".").pop() || "jpg";
+    const path = `products/${userId}/${productId}/${Date.now()}_${i}.${ext}`;
+    txt.textContent = `Mengupload foto ${i+1} dari ${_selectedPhotos.length}…`;
+    bar.style.width  = Math.round((i / _selectedPhotos.length) * 100) + "%";
+
+    const { data, error } = await supabaseClient.storage
+      .from("product-images")
+      .upload(path, file, { upsert: true, contentType: file.type });
+
+    if(error){ showToast(`Gagal upload foto ${i+1}: ${error.message}`); continue; }
+
+    const { data: pub } = supabaseClient.storage.from("product-images").getPublicUrl(path);
+    if(pub?.publicUrl) urls.push(pub.publicUrl);
+  }
+
+  bar.style.width = "100%";
+  setTimeout(() => { prog.style.display = "none"; bar.style.width = "0%"; }, 800);
+  return urls;
+}
+
+/* ── LOAD MY PRODUCTS ── */
+async function loadMyProducts(){
+  document.getElementById("myProductsWrap").innerHTML = `<div class="empty-dash"><div class="glyph">⏳</div><p>Memuat…</p></div>`;
+  try {
+    const { data:{ user } } = await supabaseClient.auth.getUser();
+    const { data, error } = await supabaseClient
+      .from("products").select("*").eq("seller_id", user.id)
+      .order("created_at",{ascending:false});
+    if(error) throw error;
+
+    if(!data||!data.length){
+      document.getElementById("myProductsWrap").innerHTML =
+        `<div class="empty-dash"><div class="glyph">🛍️</div><p>Belum ada produk. Tambah produk di atas!</p></div>`;
+      return;
+    }
+
+    document.getElementById("myProductsWrap").innerHTML = data.map(p=>{
+      const photos = Array.isArray(p.photos) ? p.photos : [];
+      const thumb  = photos[0]
+        ? `<img src="${photos[0]}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;" loading="lazy">`
+        : `<span style="font-size:20px;">${p.icon||"📦"}</span>`;
+      return `
+      <div class="prod-row">
+        <div class="prod-thumb" style="background:linear-gradient(135deg,${p.grad_start||"#1E2230"},${p.grad_end||"#2D3348"});">${thumb}</div>
+        <div class="prod-info">
+          <div class="pi-title">${p.title}</div>
+          <div class="pi-meta">${p.is_active?"✅ Aktif":"⏸️ Nonaktif"} · Stok: ${p.stock} · ${p.sold_count} terjual
+            ${photos.length ? ` · 📷 ${photos.length} foto` : ""}
+          </div>
+        </div>
+        <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+          <div class="prod-price">${fmt(p.price)}</div>
+          <div style="display:flex;gap:8px;">
+            <button style="font-size:11px;background:rgba(77,163,245,.15);border:none;color:#4DA3F5;cursor:pointer;padding:4px 8px;border-radius:6px;"
+              onclick="openProductDetail(${JSON.stringify(JSON.stringify(p))})">Detail</button>
+            <button style="font-size:11px;background:none;border:none;color:rgba(239,68,68,.7);cursor:pointer;"
+              onclick="toggleProduct('${p.id}',${p.is_active})">
+              ${p.is_active?"Nonaktifkan":"Aktifkan"}
+            </button>
+          </div>
+        </div>
+      </div>`;
+    }).join("");
+  } catch(e){
+    document.getElementById("myProductsWrap").innerHTML = `<div class="empty-dash"><div class="glyph">⚠️</div><p>${e.message}</p></div>`;
+  }
+}
+
+/* ── Modal detail produk (dari dashboard penjual) ── */
+function openProductDetail(jsonStr){
+  const p = JSON.parse(jsonStr);
+  const photos = Array.isArray(p.photos) ? p.photos : [];
+  const existing = document.getElementById("prodDetailModal");
+  if(existing) existing.remove();
+
+  const galleryHTML = photos.length
+    ? `<img id="pdmMainImg" src="${photos[0]}" style="width:100%;height:100%;object-fit:contain;">`
+    : `<div class="pdm-no-img">${p.icon||"📦"}</div>`;
+
+  const thumbsHTML = photos.length > 1
+    ? `<div class="pdm-thumbs">${photos.map((u,i)=>`<img src="${u}" class="${i===0?'active':''}" onclick="pdmSwitchImg(this,'${u}')">`).join("")}</div>`
+    : "";
+
+  const modal = document.createElement("div");
+  modal.className = "prod-detail-modal";
+  modal.id = "prodDetailModal";
+  modal.innerHTML = `
+    <div class="pdm-box">
+      <button class="pdm-close" onclick="this.closest('.prod-detail-modal').remove()">✕</button>
+      <div class="pdm-gallery">${galleryHTML}</div>
+      ${thumbsHTML}
+      <div class="pdm-body">
+        <div class="pdm-title">${p.title}</div>
+        <div class="pdm-meta">
+          <span class="pdm-badge-cat">${p.category||p.cat||"digital"}</span>
+          <span class="badge-status s-delivered" style="font-size:11px;">${p.badge||"Instan"}</span>
+          ${p.is_active?'<span class="badge-status s-completed" style="font-size:11px;">Aktif</span>':'<span class="badge-status s-cancelled" style="font-size:11px;">Nonaktif</span>'}
+        </div>
+        <div class="pdm-price">${fmt(p.price)}</div>
+        <div class="pdm-stats">Stok: ${p.stock} · Terjual: ${p.sold_count||0} · Rating: ★ ${parseFloat(p.rating||0).toFixed(1)}</div>
+        ${p.description
+          ? `<div style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;">Deskripsi Produk</div>
+             <div class="pdm-desc">${p.description}</div>`
+          : `<div class="pdm-desc" style="color:rgba(255,255,255,.3);font-style:italic;">Belum ada deskripsi.</div>`}
+        <button class="btn btn-gold" style="width:100%;" onclick="this.closest('.prod-detail-modal').remove()">Tutup</button>
+      </div>
+    </div>`;
+  modal.addEventListener("click", e => { if(e.target===modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+function pdmSwitchImg(thumb, url){
+  document.querySelectorAll(".pdm-thumbs img").forEach(t=>t.classList.remove("active"));
+  thumb.classList.add("active");
+  const main = document.getElementById("pdmMainImg");
+  if(main) main.src = url;
+}
+
+/* ── add product ── */
+async function addProduct(){
+  const title = document.getElementById("pTitle").value.trim();
+  const price = parseInt(document.getElementById("pPrice").value);
+  const stock = parseInt(document.getElementById("pStock").value)||1;
+  const cat   = document.getElementById("pCat").value;
+  const badge = document.getElementById("pBadge").value;
+  const desc  = document.getElementById("pDesc").value.trim();
+
+  if(!title || !price || price < 1000){ showToast("Isi judul & harga minimal Rp 1.000."); return; }
+
+  const btn = document.getElementById("addProdBtn");
+  btn.disabled = true; btn.textContent = "Menyimpan…";
+
+  try {
+    const { data:{ user } } = await supabaseClient.auth.getUser();
+
+    // 1. Insert produk dulu (dapat ID)
+    const { data: newProd, error } = await supabaseClient.from("products").insert({
+      seller_id: user.id, title, price, stock, category: cat, badge,
+      description: desc || null,
+      icon: cat==="game" ? "🎮" : cat==="jasa" ? "🛠️" : "📦",
+    }).select("id").single();
+    if(error) throw error;
+
+    // 2. Upload foto jika ada
+    let photoUrls = [];
+    if(_selectedPhotos.length){
+      btn.textContent = "Mengupload foto…";
+      photoUrls = await uploadPhotos(user.id, newProd.id);
+
+      if(photoUrls.length){
+        await supabaseClient.from("products")
+          .update({ photos: photoUrls, cover_image: photoUrls[0] })
+          .eq("id", newProd.id);
+      }
+    }
+
+    showToast(`✅ Produk berhasil ditambahkan!${photoUrls.length ? ` (${photoUrls.length} foto)` : ""}`);
+    // Reset form
+    document.getElementById("pTitle").value = "";
+    document.getElementById("pPrice").value = "";
+    document.getElementById("pDesc").value  = "";
+    _selectedPhotos = [];
+    renderPhotoPreviews();
+    loadMyProducts();
+  } catch(e){
+    showToast("Gagal: " + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = "Simpan Produk";
+  }
+}
+
+/* ── toggle product active ── */
+async function toggleProduct(id, isActive){
+  try {
+    const { error } = await supabaseClient.from("products")
+      .update({ is_active: !isActive, updated_at: new Date().toISOString() }).eq("id", id);
+    if(error) throw error;
+    showToast(isActive ? "Produk dinonaktifkan." : "Produk diaktifkan kembali.");
+    loadMyProducts();
+  } catch(e){ showToast("Gagal: " + e.message); }
+}
+
+/* ── LOAD WALLET ── */
+async function loadWallet(){
+  document.getElementById("walletWrap").innerHTML = `<div class="empty-dash"><div class="glyph">⏳</div><p>Memuat…</p></div>`;
+  try {
+    const { data:{ user } } = await supabaseClient.auth.getUser();
+    const { data: wallet, error } = await supabaseClient
+      .from("wallets").select("*").eq("user_id", user.id).single();
+    if(error) throw error;
+
+    const { data: txs } = await supabaseClient
+      .from("wallet_transactions").select("*")
+      .eq("wallet_id", wallet.id)
+      .order("created_at",{ascending:false}).limit(20);
+
+    const txRows = (txs||[]).map(t=>`<tr>
+      <td style="color:rgba(255,255,255,.5);font-size:12px;">${timeAgo(t.created_at)}</td>
+      <td>${t.description||t.type}</td>
+      <td style="text-align:right;font-weight:600;color:${t.type==='withdrawal'?'#F87171':'#16A37A'};">
+        ${t.type==='withdrawal'?'−':'+'}${fmt(t.amount)}</td>
+    </tr>`).join("") || `<tr><td colspan="3" style="text-align:center;padding:24px;color:rgba(255,255,255,.35);">Belum ada transaksi.</td></tr>`;
+
+    document.getElementById("walletWrap").innerHTML = `
+      <div class="wallet-card">
+        <div>
+          <div class="wc-label">Saldo Siap Cairkan</div>
+          <div class="wc-val">${fmt(wallet.balance)}</div>
+          <div class="wc-hold">Dalam rekber: ${fmt(wallet.escrow_hold)} · Total masuk: ${fmt(wallet.total_in)}</div>
+        </div>
+        <button class="btn btn-sm" style="background:#181B22;color:#E7A93D;border:1.5px solid #E7A93D;"
+          onclick="showToast('Fitur pencairan ke rekening segera hadir.')">Cairkan Saldo</button>
+      </div>
+      <h3>Riwayat Transaksi</h3>
+      <table class="order-table">
+        <thead><tr><th>Waktu</th><th>Keterangan</th><th style="text-align:right;">Jumlah</th></tr></thead>
+        <tbody>${txRows}</tbody>
+      </table>`;
+  } catch(e){
+    document.getElementById("walletWrap").innerHTML = `<div class="empty-dash"><div class="glyph">⚠️</div><p>${e.message}</p></div>`;
+  }
+}
+
+/* ── LOAD MESSAGES TAB ── */
+let dashMeId = null;
+
+async function loadMessagesTab(){
+  const inboxEl = document.getElementById("chatInbox");
+  try{
+    if(!dashMeId){
+      const { data:{ user } } = await supabaseClient.auth.getUser();
+      dashMeId = user.id;
+    }
+    const conversations = await chatLoadInbox();
+    renderChatInbox(inboxEl, conversations, chatActiveConvId, openConversationInDash);
+
+    if(!chatActiveConvId && conversations.length){
+      openConversationInDash(conversations[0]);
+    }
+  } catch(e){
+    inboxEl.innerHTML = `<div class="chat-empty">Gagal memuat pesan: ${e.message}</div>`;
+  }
+}
+
+async function openConversationInDash(conv){
+  const paneEl = document.getElementById("chatConversation");
+  paneEl.innerHTML = `
+    <div class="chat-header">
+      <div class="chat-avatar">${(conv.other_name||"?").charAt(0).toUpperCase()}</div>
+      <div>
+        <div class="chat-header-name">${conv.other_name}</div>
+        ${conv.product_title ? `<div class="chat-header-sub">${conv.product_icon||"📦"} ${conv.product_title}</div>` : ""}
+      </div>
+    </div>
+    <div class="chat-messages" id="dashChatMessages"></div>
+    <form class="chat-composer" id="dashChatForm">
+      <input type="text" id="dashChatInput" placeholder="Tulis pesan…" autocomplete="off">
+      <button type="submit" aria-label="Kirim">➤</button>
+    </form>`;
+
+  const messagesEl = document.getElementById("dashChatMessages");
+  await chatLoadAndSubscribe(conv.conversation_id, messagesEl, dashMeId);
+
+  chatWireComposer(
+    document.getElementById("dashChatForm"),
+    document.getElementById("dashChatInput"),
+    messagesEl,
+    ()=> chatActiveConvId,
+    dashMeId
+  );
+
+  const conversations = await chatLoadInbox();
+  renderChatInbox(document.getElementById("chatInbox"), conversations, conv.conversation_id, openConversationInDash);
+}
+
+/* ── LOAD NOTIFS ── */
+async function loadNotifs(){
+  try {
+    const { data:{ user } } = await supabaseClient.auth.getUser();
+    const { data, error } = await supabaseClient
+      .from("notifications").select("*").eq("user_id", user.id)
+      .order("created_at",{ascending:false}).limit(30);
+    if(error) throw error;
+
+    if(!data||!data.length){
+      document.getElementById("notifList").innerHTML = `<div class="empty-dash"><div class="glyph">🔔</div><p>Belum ada notifikasi.</p></div>`;
+      return;
+    }
+
+    document.getElementById("notifList").innerHTML = data.map(n=>`
+      <div class="notif-item ${n.is_read?'':'unread'}">
+        <div class="ni-dot"></div>
+        <div class="ni-body">
+          <div class="ni-title">${n.title}</div>
+          <div class="ni-text">${n.body}</div>
+          <div class="ni-time">${timeAgo(n.created_at)}</div>
+        </div>
+      </div>`).join("");
+
+    const unreadIds = data.filter(n=>!n.is_read).map(n=>n.id);
+    if(unreadIds.length){
+      await supabaseClient.from("notifications").update({is_read:true}).in("id",unreadIds);
+      document.getElementById("unreadBadge").style.display = "none";
+    }
+  } catch(e){
+    document.getElementById("notifList").innerHTML = `<div class="empty-dash"><div class="glyph">⚠️</div><p>${e.message}</p></div>`;
+  }
+}
+
+async function loadUnreadCount(){
+  try {
+    const { count } = await supabaseClient
+      .from("notifications").select("id",{count:"exact",head:true}).eq("is_read",false);
+    if(count>0){
+      const b = document.getElementById("unreadBadge");
+      b.textContent = count; b.style.display = "inline";
+    }
+  } catch(_){}
+}
+
+/* ── update header: swap Masuk/Daftar for user info once logged in ── */
+function setHeaderLoggedIn(user, profile){
+  const actions = document.querySelector(".header-actions");
+  if(!actions) return;
+  const displayName = profile?.username || profile?.full_name || user.email?.split("@")[0] || "Penjual";
+  const initials = displayName.slice(0,2).toUpperCase();
+  actions.innerHTML = `
+    <style>
+      .nav-profile-btn{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:5px 12px 5px 6px;cursor:default;transition:background .15s;}
+      .nav-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;border:2px solid rgba(255,255,255,.15);}
+      .nav-avatar img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+      .nav-profile-info{display:flex;flex-direction:column;line-height:1.2;}
+      .nav-profile-name{font-size:13px;font-weight:600;color:#f1f5f9;}
+      .nav-profile-role{font-size:10px;color:#f59e0b;font-weight:500;}
+    </style>
+    <div class="nav-profile-btn">
+      <div class="nav-avatar" id="navAvatarEl">${initials}</div>
+      <div class="nav-profile-info">
+        <span class="nav-profile-name">${displayName}</span>
+        <span class="nav-profile-role">🏪 Penjual</span>
+      </div>
+    </div>
+    <a href="#" id="navLogout" class="btn btn-ghost-light btn-sm" style="margin-left:4px;">Keluar</a>`;
+  document.getElementById("navLogout").addEventListener("click", async e => {
+    e.preventDefault();
+    await supabaseClient.auth.signOut();
+    localStorage.removeItem("rekberin_role");
+    window.location.href = "index.html";
+  });
+}
+
+/* ── AUTH GUARD ── */
+async function init(){
+  if(!supabaseClient){ showErr("Supabase belum terhubung. Cek config.js."); return; }
+
+  const { data:{ session } } = await supabaseClient.auth.getSession();
+  if(!session){
+    showToast("Silakan masuk dulu.");
+    setTimeout(()=> window.location.href = "login.html", 1000);
+    return;
+  }
+
+  const { data: profileCheck } = await supabaseClient
+    .from("profiles").select("is_suspended,full_name,username").eq("id", session.user.id).single();
+  if(profileCheck?.is_suspended){
+    await supabaseClient.auth.signOut();
+    showToast("Akun ini disuspend. Hubungi admin untuk info lebih lanjut.");
+    setTimeout(()=> window.location.href = "login.html", 1500);
+    return;
+  }
+
+  setHeaderLoggedIn(session.user, profileCheck);
+
+  document.getElementById("logoutLink").onclick = async e => {
+    e.preventDefault();
+    await supabaseClient.auth.signOut();
+    localStorage.removeItem("rekberin_role");
+    window.location.href = "index.html";
+  };
+
+  await loadOverview();
+  await loadUnreadCount();
+
+  // Aktifkan semua realtime sekaligus
+  setupOrdersRealtime(session.user.id);
+  setupWalletRealtime(session.user.id);
+  setupNotifRealtime(session.user.id);
+  setupProductsRealtime(session.user.id);
+}
+
+/* ── PROFIL ── */
+async function loadProfile(){
+  if(!supabaseClient) return;
+  const { data:{ session } } = await supabaseClient.auth.getSession();
+  if(!session) return;
+  document.getElementById("currentEmail").textContent = session.user.email || "—";
+  const { data: p } = await supabaseClient
+    .from("profiles").select("full_name,username,phone,bio").eq("id", session.user.id).single();
+  if(p){
+    document.getElementById("profileName").value = p.full_name || "";
+    document.getElementById("profileUsername").value = p.username || "";
+    document.getElementById("profilePhone").value = p.phone || "";
+    document.getElementById("profileBio").value = p.bio || "";
+  }
+}
+async function saveProfile(){
+  if(!supabaseClient){ showToast("Database belum terhubung."); return; }
+  const { data:{ session } } = await supabaseClient.auth.getSession();
+  if(!session) return;
+  const { error } = await supabaseClient.from("profiles").update({
+    full_name: document.getElementById("profileName").value.trim(),
+    username:  document.getElementById("profileUsername").value.trim().replace(/^@/,""),
+    phone:     document.getElementById("profilePhone").value.trim(),
+    bio:       document.getElementById("profileBio").value.trim(),
+    updated_at: new Date().toISOString(),
+  }).eq("id", session.user.id);
+  if(error){ showToast("Gagal: " + error.message); return; }
+  showToast("Profil berhasil disimpan ✓");
+}
+async function changeEmail(){
+  const newEmail = document.getElementById("newEmail").value.trim();
+  if(!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)){ showToast("Masukkan email yang valid."); return; }
+  if(!supabaseClient){ showToast("Database belum terhubung."); return; }
+  const { error } = await supabaseClient.auth.updateUser({ email: newEmail });
+  // Supabase kadang return error object kosong {} meski email berhasil terkirim
+  if(error && error.message){ showToast("Gagal: " + error.message); return; }
+  showToast("Link verifikasi dikirim ke email baru ✓");
+  document.getElementById("newEmail").value = "";
+}
+async function changePassword(){
+  const np = document.getElementById("newPassword").value;
+  const cp = document.getElementById("confirmPassword").value;
+  if(np.length < 6){ showToast("Password minimal 6 karakter."); return; }
+  if(np !== cp){ showToast("Konfirmasi password tidak cocok."); return; }
+  if(!supabaseClient){ showToast("Database belum terhubung."); return; }
+  const { error } = await supabaseClient.auth.updateUser({ password: np });
+  if(error){ showToast("Gagal: " + error.message); return; }
+  showToast("Password berhasil diperbarui ✓");
+  document.getElementById("newPassword").value = "";
+  document.getElementById("confirmPassword").value = "";
+}
+
+/* ================================================================
+   REALTIME — orders, wallet, notifikasi, produk update otomatis
+   ================================================================ */
+let _realtimeChannels = [];
+
+function _cleanupChannels() {
+  _realtimeChannels.forEach(ch => { try { supabaseClient.removeChannel(ch); } catch(_){} });
+  _realtimeChannels = [];
+}
+
+function setupOrdersRealtime(userId) {
+  if (!supabaseClient) return;
+
+  const ch = supabaseClient
+    .channel("seller-orders-" + userId)
+    .on("postgres_changes", {
+      event:  "*",
+      schema: "public",
+      table:  "orders",
+      filter: `seller_id=eq.${userId}`,
+    }, payload => {
+      const o = payload.new || payload.old;
+      const statusMap = {
+        pending_payment:"Menunggu Bayar", paid:"Dibayar",
+        processing:"Diproses", delivered:"Dikirim",
+        completed:"Selesai", disputed:"Sengketa",
+        refunded:"Dikembalikan", cancelled:"Dibatalkan"
+      };
+
+      if (payload.eventType === "INSERT") {
+        showToast("Pesanan baru masuk: " + (o.product_title || ""));
+      } else if (payload.eventType === "UPDATE") {
+        const label = statusMap[o.status] || o.status;
+        showToast("Status pesanan diperbarui: " + label);
+
+        // Kalau order selesai/refund → refresh wallet juga
+        if (["completed","refunded"].includes(o.status)) {
+          const walletTab = document.getElementById("tab-wallet");
+          if (walletTab && walletTab.style.display !== "none") loadWallet();
+        }
+      }
+
+      loadOverview();
+      const ordersTab = document.getElementById("tab-orders");
+      if (ordersTab && ordersTab.style.display !== "none") loadOrders();
+    })
+    .subscribe(status => {
+      if (status === "SUBSCRIBED") console.log("[Rekberin] Orders realtime aktif seller", userId);
+    });
+
+  _realtimeChannels.push(ch);
+}
+
+async function setupWalletRealtime(userId) {
+  if (!supabaseClient) return;
+
+  // Ambil wallet.id untuk filter wallet_transactions
+  let walletId = null;
+  try {
+    const { data: w } = await supabaseClient
+      .from("wallets").select("id").eq("user_id", userId).single();
+    if (w?.id) walletId = w.id;
+  } catch (e) { console.warn("[Rekberin] Gagal ambil wallet id:", e.message); }
+
+  const ch = supabaseClient
+    .channel("seller-wallet-" + userId)
+
+    // Pantau perubahan balance/escrow (UPDATE wallets)
+    .on("postgres_changes", {
+      event:  "UPDATE",
+      schema: "public",
+      table:  "wallets",
+      filter: `user_id=eq.${userId}`,
+    }, payload => {
+      const nw = payload.new;
+
+      const valEl  = document.querySelector("#walletWrap .wc-val");
+      const holdEl = document.querySelector("#walletWrap .wc-hold");
+      if (valEl) {
+        valEl.textContent = fmt(nw.balance || 0);
+        valEl.style.transition = "color .3s";
+        valEl.style.color = "#4ade80";
+        setTimeout(() => { valEl.style.color = ""; }, 1500);
+      }
+      if (holdEl) {
+        holdEl.textContent =
+          "Dalam rekber: " + fmt(nw.escrow_hold || 0) + " · Total masuk: " + fmt(nw.total_in || 0);
+      }
+
+      showToast("Saldo diperbarui: " + fmt(nw.balance || 0));
+    })
+
+    // Pantau transaksi baru (INSERT wallet_transactions)
+    .on("postgres_changes", {
+      event:  "INSERT",
+      schema: "public",
+      table:  "wallet_transactions",
+      filter: walletId ? `wallet_id=eq.${walletId}` : undefined,
+    }, payload => {
+      const t = payload.new;
+      const isOut = t.type === "withdrawal";
+      const sign  = isOut ? "−" : "+";
+      const color = isOut ? "#F87171" : "#4ade80";
+
+      const tbody = document.querySelector("#walletWrap .order-table tbody");
+      if (tbody) {
+        const emptyRow = tbody.querySelector("[colspan]");
+        if (emptyRow) emptyRow.closest("tr").remove();
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style="color:rgba(255,255,255,.5);font-size:12px;">baru saja</td>
+          <td>${t.description || t.type}</td>
+          <td style="text-align:right;font-weight:600;color:${color};">${sign}${fmt(t.amount)}</td>`;
+        tbody.insertAdjacentElement("afterbegin", tr);
+
+        tr.style.background = "rgba(231,169,61,.15)";
+        setTimeout(() => { tr.style.background = ""; tr.style.transition = "background 1s"; }, 1200);
+      }
+
+      if (t.type === "escrow_release") showToast("Dana rekber cair: " + fmt(t.amount));
+      if (t.type === "refund")         showToast("Refund diproses: " + fmt(t.amount));
+    })
+
+    .subscribe(status => {
+      if (status === "SUBSCRIBED") console.log("[Rekberin] Wallet realtime aktif seller", userId);
+    });
+
+  _realtimeChannels.push(ch);
+}
+
+function setupNotifRealtime(userId) {
+  if (!supabaseClient) return;
+
+  const ch = supabaseClient
+    .channel("seller-notif-" + userId)
+    .on("postgres_changes", {
+      event:  "INSERT",
+      schema: "public",
+      table:  "notifications",
+      filter: `user_id=eq.${userId}`,
+    }, payload => {
+      const n = payload.new;
+
+      const badge = document.getElementById("unreadBadge");
+      if (badge) {
+        const cur = parseInt(badge.textContent) || 0;
+        badge.textContent = cur + 1;
+        badge.style.display = "inline";
+      }
+
+      const notifTab = document.getElementById("tab-notifications");
+      if (notifTab && notifTab.style.display !== "none") loadNotifs();
+
+      showToast((n.title || "Notifikasi baru") + (n.body ? ": " + n.body.slice(0,60) : ""));
+    })
+    .subscribe();
+
+  _realtimeChannels.push(ch);
+}
+
+function setupProductsRealtime(userId) {
+  if (!supabaseClient) return;
+
+  const ch = supabaseClient
+    .channel("seller-products-" + userId)
+    .on("postgres_changes", {
+      event:  "*",
+      schema: "public",
+      table:  "products",
+      filter: `seller_id=eq.${userId}`,
+    }, () => {
+      const prodTab = document.getElementById("tab-products");
+      if (prodTab && prodTab.style.display !== "none") loadMyProducts();
+      loadOverview(); // update produk aktif di ringkasan
+    })
+    .subscribe();
+
+  _realtimeChannels.push(ch);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  init();
+
+  // Drag-and-drop untuk upload zone
+  const zone = document.getElementById("uploadZone");
+  if(zone){
+    zone.addEventListener("dragover", e => { e.preventDefault(); zone.classList.add("drag-over"); });
+    zone.addEventListener("dragleave", () => zone.classList.remove("drag-over"));
+    zone.addEventListener("drop", e => {
+      e.preventDefault(); zone.classList.remove("drag-over");
+      const dt = e.dataTransfer;
+      if(dt.files.length){
+        const fakeInput = { files: dt.files };
+        handlePhotoSelect(fakeInput);
+      }
+    });
+  }
+});
+</script>
+</body>
+</html>

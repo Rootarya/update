@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Rekberin — Top Up &amp; Akun Digital, Aman Sampai Tuntas</title>
+<meta name="description" content="Marketplace produk digital dan top up game dengan sistem rekber (rekening bersama) untuk transaksi yang aman dan terpercaya.">
+<link rel="stylesheet" href="style.css">
+<style>
+/* ===== MOBILE-FIRST OVERRIDES ===== */
+
+/* Prevent horizontal scroll globally */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { overflow-x: hidden; max-width: 100vw; }
+
+/* ---- HEADER ---- */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  flex-wrap: nowrap;
+}
+
+/* Brand — never shrink */
+.brand {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ---- PAGE SEARCH (below category chips) ---- */
+.page-search {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  position: relative;
+  margin-bottom: 4px;
+}
+.page-search svg {
+  position: absolute;
+  left: 14px;
+  color: #888;
+  pointer-events: none;
+}
+.page-search input {
+  width: 100%;
+  font-size: 15px;
+  padding: 11px 16px 11px 44px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.06);
+  color: inherit;
+  outline: none;
+  transition: border-color .2s;
+}
+.page-search input:focus { border-color: rgba(255,255,255,0.3); }
+.page-search input::placeholder { color: #888; }
+
+/* Hide desktop nav on mobile */
+.main-nav { display: none; }
+
+/* Hide Masuk button on mobile, keep Daftar + hamburger */
+.header-actions .btn-ghost-light { display: none; }
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Subnav — horizontal scroll, no wrap */
+.header-subnav .wrap {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 0 14px;
+}
+.header-subnav .wrap::-webkit-scrollbar { display: none; }
+.header-subnav a {
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+/* ---- HERO ---- */
+.hero .wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 28px 16px 32px;
+}
+.hero h1 {
+  font-size: clamp(24px, 6vw, 36px);
+  line-height: 1.25;
+  margin: 8px 0;
+}
+.hero .lead {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.hero-cta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.hero-cta .btn {
+  flex: 1 1 140px;
+  text-align: center;
+  font-size: 14px;
+  padding: 10px 16px;
+}
+.hero-stats {
+  display: flex;
+  gap: 0;
+  margin-top: 20px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.hero-stats > div {
+  flex: 1;
+  text-align: center;
+  padding: 12px 8px;
+  font-size: 12px;
+}
+.hero-stats b {
+  display: block;
+  font-size: 16px;
+  margin-bottom: 2px;
+}
+
+/* Ticket — full width on mobile */
+.ticket {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+}
+
+/* ---- TRUST STRIP ---- */
+.trust-strip .wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 16px;
+}
+.trust-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 14px;
+  width: 100%;
+}
+.trust-card .icon {
+  font-size: 22px;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.trust-card h3 {
+  font-size: 15px;
+  margin: 0 0 4px;
+}
+.trust-card p {
+  font-size: 13px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ---- CATEGORY CHIPS ---- */
+.chip-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+  flex-wrap: nowrap;
+}
+.chip-row::-webkit-scrollbar { display: none; }
+.chip {
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-size: 13px;
+  padding: 6px 14px;
+}
+
+/* ---- SECTIONS ---- */
+.section {
+  padding: 20px 0;
+}
+.section .wrap {
+  padding: 0 16px;
+}
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.section-head h2 {
+  font-size: 16px;
+  margin: 0;
+}
+.view-all {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* Product grid — 2 columns on mobile */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+/* ---- FOOTER ---- */
+.footer-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px 16px;
+}
+.footer-grid > div { width: 100%; }
+.footer-grid h4 {
+  font-size: 14px;
+  margin: 0 0 10px;
+}
+.footer-grid ul {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.footer-grid a { font-size: 13px; }
+.footer-about p { font-size: 13px; line-height: 1.6; }
+
+/* ---- TABLET (≥600px) ---- */
+@media (min-width: 600px) {
+  .header-top { padding: 10px 20px; }
+
+  .trust-strip .wrap {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .trust-card { flex: 1 1 calc(50% - 7px); }
+
+  .product-grid { grid-template-columns: repeat(3, 1fr); gap: 14px; }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+}
+
+/* ---- DESKTOP (≥900px) ---- */
+@media (min-width: 900px) {
+  .main-nav { display: flex; }
+  .header-actions .btn-ghost-light { display: inline-flex; }
+
+  .hero .wrap {
+    flex-direction: row;
+    align-items: center;
+    padding: 48px 24px 56px;
+  }
+  .hero .wrap > div:first-child { flex: 1; }
+  .ticket { margin: 0; }
+
+  .trust-strip .wrap { flex-direction: row; flex-wrap: nowrap; }
+  .trust-card { flex: 1; }
+
+  .product-grid { grid-template-columns: repeat(4, 1fr); gap: 18px; }
+
+  .footer-grid {
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+  }
+}
+
+/* ---- SAFE AREA (iPhone notch/home bar) ---- */
+@supports (padding: env(safe-area-inset-bottom)) {
+  body { padding-bottom: env(safe-area-inset-bottom); }
+  .site-header { padding-top: env(safe-area-inset-top); }
+}
+
+/* ---- MOBILE DRAWER ---- */
+.mobile-drawer .panel {
+  width: min(280px, 85vw);
+  padding: 20px 16px;
+  padding-top: calc(20px + env(safe-area-inset-top, 0px));
+}
+.mobile-drawer .panel a {
+  display: block;
+  padding: 12px 4px;
+  font-size: 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.mobile-drawer .panel a:last-child { border-bottom: none; }
+</style>
+</head>
+<body>
+
+<!-- ============ HEADER ============ -->
+<header class="site-header">
+  <div class="header-top">
+    <a href="index.html" class="brand"><span class="brand-mark"></span>Rekberin<small></small></a>
+
+    <nav class="main-nav">
+      <a href="index.html" class="active">Beranda</a>
+      <a href="products.html">Produk</a>
+      <a href="forum.html">Forum</a>
+      <a href="#rekber">Rekber</a>
+    </nav>
+
+    <div class="header-actions">
+      <a href="login.html" class="btn btn-ghost-light btn-sm">Masuk</a>
+      <a href="register.html" class="btn btn-gold btn-sm">Daftar</a>
+      <button class="menu-toggle" id="menuToggle" aria-label="Buka menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="header-subnav">
+    <div class="wrap">
+      <a href="products.html?category=digital">Produk Digital</a>
+      <a href="products.html?category=game">Produk Game</a>
+      <a href="products.html?category=jasa">Jasa</a>
+      <a href="products.html?sub=mobile-legends">Mobile Legends</a>
+      <a href="products.html?sub=free-fire">Free Fire</a>
+      <a href="products.html?sub=valorant">Valorant</a>
+      <a href="products.html?sub=pubg-mobile">PUBG Mobile</a>
+      <a href="products.html?sub=genshin-impact">Genshin Impact</a>
+      <a href="products.html?sub=roblox">Roblox</a>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-drawer" id="mobileDrawer">
+  <div class="backdrop" onclick="closeDrawer()"></div>
+  <div class="panel">
+    <button class="close-drawer" onclick="closeDrawer()" aria-label="Tutup menu">✕</button>
+    <a href="index.html">Beranda</a>
+    <a href="products.html">Produk</a>
+    <a href="forum.html">Forum</a>
+    <a href="#rekber">Rekber</a>
+    <a href="login.html">Masuk</a>
+    <a href="register.html">Daftar</a>
+  </div>
+</div>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <span class="eyebrow">✓ Dilindungi sistem rekber</span>
+      <h1>Top up &amp; akun digital,<br><span class="accent">aman</span> sampai tuntas.</h1>
+      <p class="lead">Saldo kamu ditahan rekber sampai pesanan benar-benar diterima. Buat penjual jujur dan pembeli tenang — itu janji Rekberin.</p>
+      <div class="hero-cta">
+        <a href="products.html" class="btn btn-gold">Jelajahi Produk</a>
+        <a href="register.html" class="btn btn-ghost-light">Buat Akun Gratis</a>
+      </div>
+      <div class="hero-stats">
+        <div><b>12.400+</b><span>Transaksi selesai</span></div>
+        <div><b>860+</b><span>Penjual verified</span></div>
+        <div><b>4.8 / 5</b><span>Rating pembeli</span></div>
+      </div>
+    </div>
+
+    <div class="ticket" aria-hidden="true">
+      <div class="ticket-top">
+        <div class="ticket-brand">Rekberin<small>E-VOUCHER</small></div>
+        <span class="stamp">rekber ✓</span>
+      </div>
+      <div class="ticket-product">
+        <div class="name">Mobile Legends 86 Diamond</div>
+        <div class="seller">Dijual oleh Top Up Kilat · ★ 4.9</div>
+      </div>
+      <div class="ticket-divider"></div>
+      <div class="ticket-row">
+        <div>
+          <div class="label">Total bayar</div>
+          <div class="price">Rp 22.000</div>
+        </div>
+        <div>
+          <div class="label">Status</div>
+          <div class="price" style="font-size:14px;color:#16A37A;">Terkunci aman</div>
+        </div>
+      </div>
+      <div class="barcode">
+        <span style="height:60%"></span><span style="height:100%"></span><span style="height:40%"></span><span style="height:80%"></span><span style="height:55%"></span><span style="height:90%"></span><span style="height:30%"></span><span style="height:70%"></span><span style="height:50%"></span><span style="height:100%"></span><span style="height:45%"></span><span style="height:65%"></span><span style="height:35%"></span><span style="height:85%"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TRUST STRIP ============ -->
+<section class="trust-strip">
+  <div class="wrap">
+    <div class="trust-card">
+      <div class="icon">🔒</div>
+      <div><h3>Dana Ditahan Rekber</h3><p>Pembayaran baru diteruskan ke penjual setelah pesanan kamu konfirmasi diterima.</p></div>
+    </div>
+    <div class="trust-card">
+      <div class="icon">💬</div>
+      <div><h3>Chat Langsung Penjual</h3><p>Tanya stok, nego, atau koordinasi proses tanpa keluar dari platform.</p></div>
+    </div>
+    <div class="trust-card">
+      <div class="icon">⚡</div>
+      <div><h3>Saldo &amp; Proses Instan</h3><p>Top up saldo sekali, checkout produk apa saja tanpa input ulang data bank.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CATEGORY CHIPS ============ -->
+<section class="section" style="padding-top:0;">
+  <div class="wrap">
+    <div class="section-head"><h2>Jelajahi Kategori</h2></div>
+    <div class="chip-row">
+      <a class="chip" href="products.html?category=digital">Produk Digital</a>
+      <a class="chip" href="products.html?category=game">Produk Game</a>
+      <a class="chip" href="products.html?category=jasa">Jasa</a>
+      <a class="chip" href="products.html?sub=mobile-legends">Mobile Legends</a>
+      <a class="chip" href="products.html?sub=free-fire">Free Fire</a>
+      <a class="chip" href="products.html?sub=pubg-mobile">PUBG Mobile</a>
+      <a class="chip" href="products.html?sub=valorant">Valorant</a>
+      <a class="chip" href="products.html?sub=genshin-impact">Genshin Impact</a>
+      <a class="chip" href="products.html?sub=roblox">Roblox</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SEARCH BAR ============ -->
+<section class="section section-search" style="padding-top:0; padding-bottom:4px;">
+  <div class="wrap">
+    <form class="page-search" id="headerSearch">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="Cari produk, contoh: netflix, ml diamond...">
+    </form>
+  </div>
+</section>
+
+<!-- ============ PRODUK TERBARU ============ -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>✨ Produk Terbaru</h2>
+      <a href="products.html?sort=latest" class="view-all">Lihat Semua →</a>
+    </div>
+    <div class="product-grid" id="gridLatest"></div>
+  </div>
+</section>
+
+<!-- ============ REKOMENDASI ============ -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Rekomendasi Untukmu</h2>
+      <a href="products.html" class="view-all">Lihat Semua →</a>
+    </div>
+    <div class="product-grid" id="gridRecommend"></div>
+  </div>
+</section>
+
+<!-- ============ POPULER ============ -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>🔥 Populer 24 Jam</h2>
+      <a href="products.html?sort=popular" class="view-all">Lihat Semua →</a>
+    </div>
+    <div class="product-grid" id="gridPopular"></div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="site-footer" id="rekber">
+  <div class="footer-top">
+    <div class="wrap footer-grid">
+      <div class="footer-about">
+        <a href="index.html" class="brand"><span class="brand-mark"></span>Rekberin</a>
+        <p>Marketplace produk virtual dengan sistem rekber (rekening bersama) supaya setiap transaksi tetap aman, untuk pembeli maupun penjual.</p>
+      </div>
+      <div>
+        <h4>Menu</h4>
+        <ul>
+          <li><a href="index.html">Beranda</a></li>
+          <li><a href="products.html">Produk</a></li>
+          <li><a href="#rekber">Cara Kerja Rekber</a></li>
+          <li><a href="register.html">Buat Akun</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Kategori</h4>
+        <ul>
+          <li><a href="products.html?category=digital">Produk Digital</a></li>
+          <li><a href="products.html?category=game">Produk Game</a></li>
+          <li><a href="products.html?category=jasa">Jasa</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Bantuan</h4>
+        <ul>
+          <li><a href="https://wa.me/6285600564700" target="_blank">Pusat Bantuan</a></li>
+          <li><a href="https://wa.me/6285600564700" target="_blank">Hubungi Kami</a></li>
+          <li><a href="https://wa.me/6285600564700" target="_blank">Lapor Transaksi</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://app.midtrans.com/snap/snap.js" data-client-key="Mid-client-3a96ocnU5RrQ3ShE"></script>
+<script src="data.js"></script>
+<script src="config.js"></script>
+<script src="chat.js"></script>
+<script src="app.js"></script>
+<script src="nav-auth.js"></script>
+<script>
+  document.getElementById("menuToggle").addEventListener("click", openDrawer);
+  wireHeaderSearch("headerSearch");
+
+  async function initHome(){
+    await loadProducts();
+
+    if(PRODUCTS.length === 0){
+      const emptyMsg = `<div class="empty-state"><div class="glyph">🎫</div><p><strong>Belum ada produk.</strong><br>Produk yang ditambahkan penjual akan tampil di sini.</p></div>`;
+      document.getElementById("gridLatest").innerHTML = emptyMsg;
+      document.getElementById("gridRecommend").innerHTML = emptyMsg;
+      document.getElementById("gridPopular").innerHTML = emptyMsg;
+      return;
+    }
+
+    renderGrid("gridLatest", PRODUCTS.slice(0, 8));
+    renderGrid("gridRecommend", [...PRODUCTS].sort((a,b)=> b.rating - a.rating).slice(0, 8));
+    renderGrid("gridPopular", [...PRODUCTS].sort((a,b)=> b.sold - a.sold).slice(0, 8));
+  }
+
+  initHome();
+</script>
+</body>
+</html>

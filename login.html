@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Masuk — Rekberin</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-top">
+    <a href="index.html" class="brand"><span class="brand-mark"></span>Rekberin<small>Verified marketplace</small></a>
+    <nav class="main-nav">
+      <a href="index.html">Beranda</a>
+      <a href="products.html">Produk</a>
+      <a href="forum.html">Forum</a>
+      <a href="#rekber">Rekber</a>
+    </nav>
+    <div class="header-actions">
+      <a href="login.html" class="btn btn-ghost-light btn-sm">Masuk</a>
+      <a href="register.html" class="btn btn-gold btn-sm">Daftar</a>
+    </div>
+  </div>
+</header>
+
+<section class="auth-shell">
+  <div class="auth-card">
+    <span class="auth-eyebrow">✓ Akses akun</span>
+    <h1>Selamat datang kembali</h1>
+    <p class="sub">Masuk untuk lanjut transaksi rekber dan pantau pesananmu.</p>
+
+    <!-- TAB SWITCHER -->
+    <div style="display:flex;gap:0;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:4px;margin-bottom:22px;">
+      <button type="button" id="tabPembeli" onclick="setRole('pembeli')"
+        style="flex:1;padding:8px;border-radius:7px;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:all .2s;background:var(--verified);color:#fff;">
+        🛒 Masuk sebagai Pembeli
+      </button>
+      <button type="button" id="tabPenjual" onclick="setRole('penjual')"
+        style="flex:1;padding:8px;border-radius:7px;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:all .2s;background:transparent;color:var(--text-on-ink-muted);">
+        🏪 Masuk sebagai Penjual
+      </button>
+    </div>
+
+    <div id="roleHint" style="font-size:12px;color:var(--verified);background:rgba(22,163,122,.1);border:1px solid rgba(22,163,122,.2);border-radius:8px;padding:8px 12px;margin-bottom:16px;text-align:center;">
+      Akan diarahkan ke <b>Dashboard Pembeli</b> setelah masuk
+    </div>
+
+    <form id="loginForm" novalidate>
+      <input type="hidden" id="loginRole" value="pembeli">
+
+      <div class="field" id="f-email">
+        <label for="email">Email atau Username</label>
+        <input type="text" id="email" autocomplete="username" placeholder="kamu@email.com">
+        <p class="err">Email atau username wajib diisi.</p>
+      </div>
+
+      <div class="field" id="f-password">
+        <label for="password">Kata Sandi</label>
+        <input type="password" id="password" autocomplete="current-password" placeholder="Minimal 6 karakter">
+        <p class="err">Kata sandi minimal 6 karakter.</p>
+      </div>
+
+      <div class="field-check">
+        <input type="checkbox" id="remember">
+        <label for="remember">Ingat saya di perangkat ini</label>
+      </div>
+
+      <button type="submit" class="btn btn-verified btn-block" id="submitBtn">Masuk sebagai Pembeli</button>
+      <p class="auth-switch"><a href="#" onclick="showToast('Demo: fitur lupa kata sandi belum terhubung backend.'); return false;">Lupa kata sandi?</a></p>
+    </form>
+
+    <div class="auth-divider"><span>atau</span></div>
+    <p class="auth-switch">Belum punya akun? <a href="register.html">Daftar sekarang</a></p>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script src="chat.js"></script>
+<script src="app.js"></script>
+<script>
+  function setRole(role) {
+    const roleInput = document.getElementById("loginRole");
+    const tabPembeli = document.getElementById("tabPembeli");
+    const tabPenjual = document.getElementById("tabPenjual");
+    const hint = document.getElementById("roleHint");
+    const submitBtn = document.getElementById("submitBtn");
+
+    roleInput.value = role;
+
+    if (role === "pembeli") {
+      tabPembeli.style.background = "var(--verified)";
+      tabPembeli.style.color = "#fff";
+      tabPenjual.style.background = "transparent";
+      tabPenjual.style.color = "var(--text-on-ink-muted)";
+      hint.style.color = "var(--verified)";
+      hint.style.background = "rgba(22,163,122,.1)";
+      hint.style.borderColor = "rgba(22,163,122,.2)";
+      hint.innerHTML = "Akan diarahkan ke <b>Dashboard Pembeli</b> setelah masuk";
+      submitBtn.textContent = "Masuk sebagai Pembeli";
+      submitBtn.style.background = "";
+      submitBtn.style.color = "";
+    } else {
+      tabPenjual.style.background = "var(--gold)";
+      tabPenjual.style.color = "#181B22";
+      tabPembeli.style.background = "transparent";
+      tabPembeli.style.color = "var(--text-on-ink-muted)";
+      hint.style.color = "var(--gold)";
+      hint.style.background = "rgba(231,169,61,.1)";
+      hint.style.borderColor = "rgba(231,169,61,.2)";
+      hint.innerHTML = "Akan diarahkan ke <b>Dashboard Penjual</b> setelah masuk";
+      submitBtn.textContent = "Masuk sebagai Penjual";
+      submitBtn.style.background = "var(--gold)";
+      submitBtn.style.color = "#181B22";
+    }
+  }
+
+  const form = document.getElementById("loginForm");
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    let valid = true;
+
+    const email = document.getElementById("email");
+    const fEmail = document.getElementById("f-email");
+    if(email.value.trim() === ""){ fEmail.classList.add("invalid"); valid = false; } else { fEmail.classList.remove("invalid"); }
+
+    const pass = document.getElementById("password");
+    const fPass = document.getElementById("f-password");
+    if(pass.value.length < 6){ fPass.classList.add("invalid"); valid = false; } else { fPass.classList.remove("invalid"); }
+
+    if(!valid) return;
+
+    const role = document.getElementById("loginRole").value;
+    let redirectUrl = role === "penjual" ? "dashboard-penjual.html" : "dashboard-pembeli.html";
+
+    if(!supabaseClient){
+      // Demo mode: redirect langsung tanpa auth
+      showToast("Mode demo: mengalihkan ke dashboard...");
+      setTimeout(()=> window.location.href = redirectUrl, 800);
+      return;
+    }
+
+    const submitBtn = document.getElementById("submitBtn");
+    const originalLabel = submitBtn.textContent;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Memproses...";
+
+    const { data: signInData, error } = await supabaseClient.auth.signInWithPassword({
+      email: email.value.trim(),
+      password: pass.value,
+    });
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalLabel;
+
+    if(error){
+      showToast("Gagal masuk: " + error.message);
+      return;
+    }
+
+    // role asli di database menang dari pilihan tab — admin selalu diarahkan ke panel admin
+    const { data: profile } = await supabaseClient
+      .from("profiles").select("role,is_suspended").eq("id", signInData.user.id).single();
+
+    if(profile?.is_suspended){
+      await supabaseClient.auth.signOut();
+      showToast("Akun ini disuspend. Hubungi admin untuk info lebih lanjut.");
+      return;
+    }
+    if(profile?.role === "admin") redirectUrl = "dashboard-admin.html";
+
+    showToast("Berhasil masuk! Mengalihkan...");
+    setTimeout(()=> window.location.href = redirectUrl, 800);
+  });
+</script>
+</body>
+</html>
